@@ -1,0 +1,171 @@
+---
+title: "00_LoadData"
+author: "YasmineIlli"
+date: "2026-07-14"
+output: workflowr::wflow_html
+editor_options:
+  chunk_output_type: console
+---
+
+## Setup
+
+```{r message = FALSE, warning = FALSE}
+# Load packages
+library(Seurat)
+library(scCustomize)
+```
+
+I used Read_CellBender_h5_Mat() from scCustomize because it is created specifically for Cellbender output.
+
+```{r warning = FALSE}
+# Load healthy controls
+HC001 <- Read_CellBender_h5_Mat(file_name = "data/HC001_output.h5")
+HC001 <- CreateSeuratObject(counts = HC001,
+                            project = "HC001")
+
+HC002 <- Read_CellBender_h5_Mat(file_name = "data/HC002_output.h5")
+HC002 <- CreateSeuratObject(counts = HC002,
+                            project = "HC002")
+
+HC003 <- Read_CellBender_h5_Mat(file_name = "data/HC003_output.h5")
+HC003 <- CreateSeuratObject(counts = HC003,
+                            project = "HC003")
+
+HC004 <- Read_CellBender_h5_Mat(file_name = "data/HC004_output.h5")
+HC004 <- CreateSeuratObject(counts = HC004,
+                            project = "HC004")
+
+HC005 <- Read_CellBender_h5_Mat(file_name = "data/HC005_output.h5")
+HC005 <- CreateSeuratObject(counts = HC005,
+                            project = "HC005")
+
+HC006 <- Read_CellBender_h5_Mat(file_name = "data/HC006_output.h5")
+HC006 <- CreateSeuratObject(counts = HC006,
+                            project = "HC006")
+
+# Load preSSc samples
+V002 <- Read_CellBender_h5_Mat(file_name = "data/V002_output.h5")
+V002 <- CreateSeuratObject(counts = V002,
+                            project = "V002")
+
+V003 <- Read_CellBender_h5_Mat(file_name = "data/V003_output.h5")
+V003 <- CreateSeuratObject(counts = V003,
+                            project = "V003")
+
+V007 <- Read_CellBender_h5_Mat(file_name = "data/V007_output.h5")
+V007 <- CreateSeuratObject(counts = V007,
+                            project = "V007")
+
+V009 <- Read_CellBender_h5_Mat(file_name = "data/V009_output.h5")
+V009 <- CreateSeuratObject(counts = V009,
+                            project = "V009")
+
+V010 <- Read_CellBender_h5_Mat(file_name = "data/V010_output.h5")
+V010 <- CreateSeuratObject(counts = V010,
+                            project = "V010")
+
+V014 <- Read_CellBender_h5_Mat(file_name = "data/V014_output.h5")
+V014 <- CreateSeuratObject(counts = V014,
+                            project = "V014")
+
+V016 <- Read_CellBender_h5_Mat(file_name = "data/cellbender_V016.h5")
+V016 <- CreateSeuratObject(counts = V016,
+                            project = "V016")
+
+V018 <- Read_CellBender_h5_Mat(file_name = "data/cellbender_V018.h5")
+V018 <- CreateSeuratObject(counts = V018,
+                            project = "V018")
+
+V019 <- Read_CellBender_h5_Mat(file_name = "data/cellbender_V019.h5")
+V019 <- CreateSeuratObject(counts = V019,
+                            project = "V019")
+
+# Load SSc samples
+S3001 <- Read_CellBender_h5_Mat(file_name = "data/S3001_output.h5")
+S3001 <- CreateSeuratObject(counts = S3001,
+                            project = "S3001")
+
+S3006 <- Read_CellBender_h5_Mat(file_name = "data/S3006_output.h5")
+S3006 <- CreateSeuratObject(counts = S3006,
+                            project = "S3006")
+
+S3008 <- Read_CellBender_h5_Mat(file_name = "data/S3008_output.h5")
+S3008 <- CreateSeuratObject(counts = S3008,
+                            project = "S3008")
+
+S3011 <- Read_CellBender_h5_Mat(file_name = "data/S3011_output.h5")
+S3011 <- CreateSeuratObject(counts = S3011,
+                            project = "S3011")
+
+S3012 <- Read_CellBender_h5_Mat(file_name = "data/S3012_output.h5")
+S3012 <- CreateSeuratObject(counts = S3012,
+                            project = "S3012")
+
+S3013 <- Read_CellBender_h5_Mat(file_name = "data/S3013_output.h5")
+S3013 <- CreateSeuratObject(counts = S3013,
+                            project = "S3013")
+
+S3015 <- Read_CellBender_h5_Mat(file_name = "data/S3015_output.h5")
+S3015 <- CreateSeuratObject(counts = S3015,
+                            project = "S3015")
+
+# Load Raynaud samples
+RaHC001 <- Read_CellBender_h5_Mat(file_name = "data/cellbender_001.h5")
+RaHC001 <- CreateSeuratObject(counts = RaHC001,
+                              project = "RaHC001")
+
+RaHC002 <- Read_CellBender_h5_Mat(file_name = "data/cellbender_002.h5")
+RaHC002 <- CreateSeuratObject(counts = RaHC002,
+                              project = "RaHC002")
+
+RaHC003 <- Read_CellBender_h5_Mat(file_name = "data/cellbender_003.h5")
+RaHC003 <- CreateSeuratObject(counts = RaHC003,
+                              project = "RaHC003")
+
+RaHC004 <- Read_CellBender_h5_Mat(file_name = "data/cellbender_004.h5")
+RaHC004 <- CreateSeuratObject(counts = RaHC004,
+                              project = "RaHC004")
+```
+
+```{r}
+# Add all the Seurat objects to one list
+cellbender_seurat_objects <- list(
+  HC001 = HC001,
+  HC002 = HC002,
+  HC003 = HC003,
+  HC004 = HC004,
+  HC005 = HC005,
+  HC006 = HC006,
+  V002 = V002,
+  V003 = V003,
+  V007 = V007,
+  V009 = V009,
+  V010 = V010,
+  V014 = V014,
+  V016 = V016,
+  V018 = V018,
+  V019 = V019,
+  S3001 = S3001,
+  S3006 = S3006,
+  S3008 = S3008,
+  S3011 = S3011,
+  S3012 = S3012,
+  S3013 = S3013,
+  S3015 = S3015,
+  RaHC001 = RaHC001,
+  RaHC002 = RaHC002,
+  RaHC003 = RaHC003,
+  RaHC004 = RaHC004
+)
+```
+
+```{r}
+# Save R object
+saveRDS(cellbender_seurat_objects, 
+        file = "data/cellbender_seurat_objects.rds")
+```
+
+```{r}
+sessionInfo()
+```
+
