@@ -1,0 +1,664 @@
+---
+title: "01_QC1"
+author: "YasmineIlli"
+date: "2026-07-14"
+output: workflowr::wflow_html
+editor_options:
+  chunk_output_type: console
+---
+
+*(adapted from Lumeng Li's code)*
+
+## Setup
+
+```{r message = FALSE, warning = FALSE}
+# Load libraries
+library(Seurat)
+library(tidyverse)
+library(DoubletFinder)
+```
+
+```{r}
+# Setup output directories
+data_output_directory <- "output/01_QC/data/QC1/"
+plots_output_directory <- "output/01_QC/plots/QC1/"
+RObjects_output_directory <- "output/01_QC/RObjects/QC1"
+```
+
+```{r}
+# Plot settings
+theme_set(theme_classic())
+
+# Color palette
+pal <- c(
+  blue   = "#015EA8",
+  rose   = "#B56576",
+  blush  = "#FAE8EB",
+  navy   = "#0A014F",
+  brown  = "#3F220F"
+)
+
+# Group colours (4 groups: HC, RaHC, S3, V)
+group_cols <- c(HC = "#015EA8", RaHC = "#B56576", S3 = "#3F220F", V = "#0A014F")
+
+# Doublet/Singlet
+doublet_cols <- c(Singlet = "#015EA8", Doublet = "#B56576")
+```
+
+
+```{r}
+# Load data
+cellbender_seurat_objects <- readRDS("data/cellbender_seurat_objects.rds")
+```
+
+## Plotting QC metrics
+
+```{r}
+# Number of cells per sample
+cells_before <- sapply(cellbender_seurat_objects, ncol)
+
+# Function to calculate and save percent.mt in metadata for each sample
+add_qc_percentage_to_metadata <- function(seurat_objects_list) {
+  lapply(seurat_objects_list, function(seurat_obj) {
+    seurat_obj <- subset(seurat_obj,
+                         subset = nCount_RNA > 0)
+    
+    seurat_obj[["percent.mt"]] <- PercentageFeatureSet(seurat_obj, 
+                                                       pattern = "^MT-")
+    seurat_obj[["percent.hb"]] <- PercentageFeatureSet(seurat_obj, 
+                                                       pattern = "^HB[^(P)]")
+    seurat_obj[["percent.ribo"]] <- PercentageFeatureSet(seurat_obj,
+                                                         pattern = "^RPL|^RPS")
+    seurat_obj
+  })
+}
+
+# Update cellbender_seurat_objects with percent.mt in metadata
+cellbender_seurat_objects <- add_qc_percentage_to_metadata(cellbender_seurat_objects)
+```
+
+```{r QC_VlnPlots, warning = FALSE}
+plot_Vln_qc_metrics <- function(seurat_objects_list, out_dir = plots_output_directory) {
+  
+  for (sample_name in names(seurat_objects_list)) {
+    seurat_obj <- seurat_objects_list[[sample_name]]
+    p <- VlnPlot(seurat_obj,
+                 features = c("nFeature_RNA",
+                              "nCount_RNA",
+                              "percent.mt",
+                              "percent.hb",
+                              "percent.ribo"),
+                 ncol = 5,
+                 group.by = "orig.ident",
+                 cols = "#B56676")
+    
+    p[[1]] <- p[[1]] + ggtitle("nFeature")
+    p[[2]] <- p[[2]] + ggtitle("nCount")
+    p[[3]] <- p[[3]] + ggtitle("MT (%)")
+    p[[4]] <- p[[4]] + ggtitle("Hb (%)")
+    p[[5]] <- p[[5]] + ggtitle("Ribo (%)")
+    
+    print(p)
+    
+    ggsave(filename = file.path(out_dir, paste0("01_QC1_MetricsVlnPlot_", sample_name, ".png")),
+           plot = p,
+           width = 20, height = 4, dpi = 300)
+  }
+}
+
+plot_Vln_qc_metrics(cellbender_seurat_objects)
+```
+
+## Set individual thresholds
+
+```{r thresholding}
+# List of thresholds per sample
+thresholds <- list(
+  # Healthy controls
+  HC001 = list(nFeature_max = 8000, mt_max = 20),
+  HC002 = list(nFeature_max = 8000, mt_max = 25),
+  HC003 = list(nFeature_max = 6000, mt_max = 20),
+  HC004 = list(nFeature_max = 8000, mt_max = 20),
+  HC005 = list(nFeature_max = 8000, mt_max = 25),
+  HC006 = list(nFeature_max = 7000, mt_max = 25),
+  
+  # Raynaud's
+  RaHC001 = list(nFeature_max = 7000, mt_max = 25),
+  RaHC002 = list(nFeature_max = 7000, mt_max = 30),
+  RaHC003 = list(nFeature_max = 7000, mt_max = 25),
+  RaHC004 = list(nFeature_max = 7000, mt_max = 30),
+  
+  # Established SSc
+  S3001 = list(nFeature_max = 7000, mt_max = 25),
+  S3006 = list(nFeature_max = 8000, mt_max = 20),
+  S3008 = list(nFeature_max = 7000, mt_max = 25),
+  S3011 = list(nFeature_max = 7000, mt_max = 25),
+  S3012 = list(nFeature_max = 7000, mt_max = 25),
+  S3013 = list(nFeature_max = 8000, mt_max = 20),
+  S3015 = list(nFeature_max = 7500, mt_max = 20),
+  
+  # pre-SSc
+  V002 = list(nFeature_max = 6000, mt_max = 25),
+  V003 = list(nFeature_max = 7000, mt_max = 20),
+  V007 = list(nFeature_max = 7500, mt_max = 20),
+  V009 = list(nFeature_max = 7500, mt_max = 20),
+  V010 = list(nFeature_max = 7500, mt_max = 20),
+  V014 = list(nFeature_max = 5000, mt_max = 20),
+  V016 = list(nFeature_max = 6000, mt_max = 20),
+  V018 = list(nFeature_max = 7000, mt_max = 25),
+  V019 = list(nFeature_max = 6000, mt_max = 25)
+)
+
+# Function to subset the samples to the thresholds
+cellbender_seurat_objects <- lapply(names(cellbender_seurat_objects), function(s) {
+  obj <- cellbender_seurat_objects[[s]]
+  th  <- thresholds[[s]]
+  md  <- obj@meta.data
+  keep <- rownames(md)[md$nFeature_RNA < th$nFeature_max &
+                       md$percent.mt   < th$mt_max]
+  subset(obj, cells = keep)
+})
+names(cellbender_seurat_objects) <- names(thresholds)
+
+# Cells remaining per sample
+cells_after <- sapply(cellbender_seurat_objects, ncol)
+
+qc_summary <- tibble(
+  sample = names(cells_before),
+  cells_before = cells_before,
+  cells_after = cells_after[names(cells_before)],
+  row.names = NULL
+)
+
+qc_summary %>% 
+  mutate(cells_removed = cells_before - cells_after,
+         pct_retained = round(100 * cells_after/cells_before, 1))
+
+qc_summary
+
+# Save qc summary
+write.csv(qc_summary,
+          file = file.path(data_output_directory, "01_QC1_CellCounts.csv"),
+          row.names = FALSE)
+```
+
+Now we can take a look at what the violin plots look like after thresholding.
+
+```{r violin plots after thresholding, warning = FALSE}
+plot_AfterThreshold_Vln_qc_metrics <- function(seurat_objects_list, out_dir = plots_output_directory) {
+  
+  for (sample_name in names(seurat_objects_list)) {
+    seurat_obj <- seurat_objects_list[[sample_name]]
+    p <- VlnPlot(seurat_obj,
+                 features = c("nFeature_RNA",
+                              "nCount_RNA",
+                              "percent.mt",
+                              "percent.hb",
+                              "percent.ribo"),
+                 ncol = 5,
+                 group.by = "orig.ident",
+                 cols = "#0A014F")
+    
+    p[[1]] <- p[[1]] + ggtitle("nFeature")
+    p[[2]] <- p[[2]] + ggtitle("nCount")
+    p[[3]] <- p[[3]] + ggtitle("MT (%)")
+    p[[4]] <- p[[4]] + ggtitle("Hb (%)")
+    p[[5]] <- p[[5]] + ggtitle("Ribo (%)")
+    
+    print(p)
+    
+    ggsave(filename = file.path(out_dir, paste0("01_QC1_AfterThresholdMetricsVlnPlot_", sample_name, ".png")),
+           plot = p,
+           width = 20, height = 4, dpi = 300)
+  }
+}
+
+plot_AfterThreshold_Vln_qc_metrics(cellbender_seurat_objects)
+```
+
+## DoubletFinder
+
+### DoubletFinder Preparation
+
+Before running DoubletFinder we need to normalize, scale, find variable genes and run PCA. Here I chose approx = FALSE for RunPCA to make the run independent of what processor we are using (deterministic).
+
+```{r preprocessing 1, message = FALSE}
+set.seed(123)
+process_seurat_objects <- function(seurat_object_list) {
+  
+  lapply(seq_along(seurat_object_list), function(i) {
+    seurat_obj  <- seurat_object_list[[i]]
+    sample_name <- names(seurat_object_list)[i]
+    
+    # Step 1: Normalize (scale factor = median nCount_RNA of this sample)
+    scale_factor <- median(seurat_obj$nCount_RNA)
+    print(scale_factor)
+    seurat_obj <- NormalizeData(seurat_obj, 
+                                scale.factor = scale_factor)
+    hist(seurat_obj[["nCount_RNA"]]$nCount_RNA, 
+         breaks = 20, 
+         main = sample_name)
+    
+    # Step 2: Variable features
+    seurat_obj <- FindVariableFeatures(seurat_obj, 
+                                       selection.method = "vst", 
+                                       nfeatures = 2000)
+    
+    # Step 3: Scale on all genes
+    seurat_obj <- ScaleData(seurat_obj, 
+                            features = rownames(seurat_obj), 
+                            verbose = FALSE)
+    
+    # Step 4: PCA (approx = FALSE for deterministic, machine-independent results)
+    seurat_obj <- RunPCA(seurat_obj,
+                         features = VariableFeatures(seurat_obj),
+                         approx   = FALSE,
+                         verbose  = FALSE)
+    
+    # Step 5: Elbow plot
+    print(ElbowPlot(seurat_obj, ndims = 50, reduction = "pca") + ggtitle(sample_name))
+    
+    seurat_obj
+  }) |> setNames(names(seurat_object_list))
+}
+
+cellbender_seurat_objects <- process_seurat_objects(cellbender_seurat_objects)
+```
+
+For finding neighbors and clustering we are going to use 35 dimension and a resolution of 0.3.
+
+```{r preprocessing 2, warning = FALSE, message =  FALSE}
+set.seed(123)
+process_seurat_clustering <- function(seurat_object_list, dims = 1:35, resolution = 0.3) {
+  
+  lapply(seq_along(seurat_object_list), function(i) {
+    set.seed(123) # re-seeded per sample for reproducibility across each individual sample
+    seurat_obj  <- seurat_object_list[[i]]
+    sample_name <- names(seurat_object_list)[i]
+    
+    # Step 1: Neighbors
+    seurat_obj <- FindNeighbors(seurat_obj, dims = dims, verbose = FALSE)
+    
+    # Step 2: Clustering
+    seurat_obj <- FindClusters(seurat_obj, resolution = resolution, verbose = FALSE)
+    
+    # Step 3: UMAP
+    seurat_obj <- RunUMAP(seurat_obj, dims = dims, verbose = FALSE)
+    
+    seurat_obj
+  }) |> setNames(names(seurat_object_list))
+}
+
+cellbender_seurat_objects <- process_seurat_clustering(cellbender_seurat_objects)
+```
+
+### pN-pK parameter sweep
+
+We are going to calculate the optimal pK value per sample. This pK value is the neighborhood size DoubletFinder will use to calculate the fraction of artificial doublets in a neighborhood (pANN value). Samples with high pANN values sit in regions that are "doublet-like" and are identified as doublets. The size of the neighborhood pK will influence the pANN value.
+
+pN is the amount of artificial doublets added but DoubletFinder is largely insensitive to this value. summarizeSweep() will compute the bimodality of the paNN distribution for different pN-pK value pairs. Ideally the pANN distribution would be strictly bimodal, so that singlets are grouped together and doublets are grouped together. find.pK() then identifies which pK leads to the best separation. It might be arbitrary for example if the BCmetric curve is flat or noisy and that is why we are also computing plots to look at. Ideally the plots have an obvious single peak.
+
+```{r pN-pK parameter sweep, message = FALSE, warning = FALSE}
+set.seed(123)
+
+process_seurat_sweep <- function(seurat_object_list,
+                                 output_directory = plots_output_directory,
+                                 PCs = 1:35) {
+  
+  lapply(seq_along(seurat_object_list), function(i) {
+    set.seed(123)                                   # re-seeded per sample for reproducibility
+    seurat_obj  <- seurat_object_list[[i]]
+    sample_name <- names(seurat_object_list)[i]
+    
+    # Sweep pN (proportion of artificial doublets) x pK (kNN neighbourhood size)
+    # Generates artificial doublets and computes pANN for every parameter pair
+    sweep.res.list <- paramSweep(seurat_obj, PCs = PCs, sct = FALSE)
+    
+    # For each pN-pK pair, compute the bimodality coefficient of the pANN distribution
+    sweep.stats <- summarizeSweep(sweep.res.list, GT = FALSE)
+    
+    # BCmetric = mean-variance-normalised BC across pN; its max marks the pK
+    # where singlets and doublets separate most cleanly
+    bcmvn <- find.pK(sweep.stats)
+    
+    # Optimal pK = the one maximising BCmetric
+    pK <- bcmvn %>%
+      filter(BCmetric == max(BCmetric)) %>%
+      pull(pK) %>%
+      as.character() %>%
+      as.numeric()
+    
+    # Plot the BCmetric curve — inspect these: a good sweep has one clear peak,
+    # a flat/noisy curve or a peak at the range edge means the argmax is unreliable
+    sweep_plot <- ggplot(bcmvn, aes(pK, BCmetric, group = 1)) +
+      geom_point() +
+      geom_line() +
+      geom_vline(xintercept = which.max(bcmvn$BCmetric),   # mark the selected pK
+                 linetype = "dashed", colour = "red") +
+      theme_minimal() +
+      ggtitle(paste("Sweep results for", sample_name),
+              subtitle = paste("Selected pK =", pK)) +
+      xlab("pK") +
+      ylab("BCmetric") +
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, size = 7))
+    
+    ggsave(filename = file.path(output_directory,
+                                paste0("01_QC1_pKSweep_", sample_name, ".png")),
+           plot = sweep_plot, width = 8, height = 6)
+    
+    pK
+  }) |> setNames(names(seurat_object_list))
+}
+
+optimal_pk_list <- process_seurat_sweep(cellbender_seurat_objects)
+```
+
+```{r check pK list}
+optimal_pk_list
+
+# Adjust optimal pK list if needed
+```
+
+*Note*
+
+Currently the samples with questionable optimal pK values are:
+
+-   RaHC001
+-   RaHC004
+-   S3001
+-   S3006
+-   S3011
+-   S3012
+-   S3015
+-   V003
+-   V010
+
+Maybe we need to adjust the optimal pK values. But first we will run DoubletFinder and then the plots and see if these stick out.
+
+### Running DoubletFinder
+
+For the estimated doublet rate check the manufacturers protocol on the estimate of multiplets. Here we had a wide range of cells recovered (between about 2000 and 10000), which would give us and estimate of anywhere between 1.6-8.0% of multiplets. Lumeng chose 5% so we are going to stay with that. Other parameters:
+
+-   PCs: same as in preprocessing (35)
+
+-   pN: 25% is the default and changes have been shown to have minimal impact
+
+-   pK: use optimal pK
+
+-   nExp: adjusted value based on homotypic doublets
+
+-   sct: if you used the SCT pipeline visualize doublets
+
+```{r DoubletFinder, message = FALSE}
+set.seed(123)
+
+DF_list <- function(seurat_object_list, pK_list, DB_rate = 0.05, PCs = 1:35, pN = 0.25) {
+  
+  lapply(seq_along(seurat_object_list), function(i) {
+    set.seed(123)
+    seurat_obj  <- seurat_object_list[[i]]
+    sample_name <- names(seurat_object_list)[i]
+    
+    # pK looked up by name, not position
+    pK <- pK_list[[sample_name]]
+    
+    # Expected doublets: Poisson estimate, adjusted down for homotypic doublets
+    # (doublets of two cells of the same type are undetectable by expression)
+    annotations    <- as.character(seurat_obj@meta.data$seurat_clusters)
+    homotypic.prop <- modelHomotypic(annotations)
+    nExp_poi       <- round(DB_rate * ncol(seurat_obj))
+    nExp_poi.adj   <- round(nExp_poi * (1 - homotypic.prop))
+    
+    seurat_obj <- doubletFinder(seurat_obj,
+                                PCs        = PCs,
+                                pN         = pN,
+                                pK         = pK,
+                                nExp       = nExp_poi.adj,
+                                reuse.pANN = NULL,
+                                sct        = FALSE)
+    
+    # Column name is built from the parameters used
+    df_col <- paste0("DF.classifications_", pN, "_", pK, "_", nExp_poi.adj)
+    
+    p <- DimPlot(seurat_obj, 
+                 reduction = "umap", 
+                 group.by = df_col,
+                 cols = c("Singlet" = "#015EA8", "Doublet" = "#B56676")) +
+            ggtitle(sample_name)
+    
+    print(p)
+    
+    ggsave(filename = file.path(plots_output_directory,
+                                paste0("01_QC1_DoubletDimPlot", sample_name, ".png")), 
+           plot = p)
+    
+    seurat_obj$doublet <- seurat_obj[[df_col]]
+    seurat_obj
+  }) |> setNames(names(seurat_object_list))
+}
+
+cellbender_seurat_objects <- DF_list(cellbender_seurat_objects, optimal_pk_list, DB_rate = 0.05, PCs = 1:35, pN = 0.25)
+```
+
+### Doublet Proportion Plots
+
+```{r Proportion Plot function, message = FALSE}
+ProportionPlot <- function(object, name1, name2, cols = NULL, as_percent = FALSE) {
+  # Stacked bar plot: proportion of `name1` levels within each level of `name2`.
+  # Each bar (one per name2 level) sums to 1.
+  # Example: ProportionPlot(merged, "seurat_clusters", "sample")
+
+  md <- object@meta.data
+  stopifnot(all(c(name1, name2) %in% colnames(md)))
+
+  prop_df <- table(md[[name1]], md[[name2]]) |>
+    prop.table(margin = 2) |>   # normalise within each name2 level
+    as.data.frame() |>
+    setNames(c(name1, name2, "proportion"))
+
+  p <- ggplot(prop_df, aes(x = .data[[name2]], y = proportion, fill = .data[[name1]])) +
+    geom_col(colour = "black") +
+    labs(x = name2, y = "Proportion of cells", fill = name1) +
+    theme_linedraw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+  if (!is.null(cols))  p <- p + scale_fill_manual(values = cols)
+  if (as_percent)      p <- p + scale_y_continuous(labels = scales::percent)
+
+  p
+  
+}
+```
+
+```{r use proportion plot function, message = FALSE}
+for (i in seq_along(cellbender_seurat_objects)) {
+  # Get the current Seurat object
+  seurat_obj <- cellbender_seurat_objects[[i]]
+  
+  # Extract the name of the Seurat object
+  obj_name <- names(cellbender_seurat_objects)[i]
+  
+  # Perform the ProportionPlot function
+  plot <- ProportionPlot(seurat_obj, name1 ="doublet", name2 ="seurat_clusters", cols = doublet_cols, as_percent = TRUE)
+  
+  # Define the file path for saving the plot
+  file_path <- file.path(plots_output_directory, paste0("01_QC_ProportionPlot_", obj_name, ".png"))
+    
+  ggsave(filename = file_path, plot = plot, width = 8, height = 6)
+}
+```
+
+### Doublet scatter plots
+
+```{r doublet scatter plots, fig.height = 12, fig.width = 16, message = FALSE, warning = FALSE}
+# Function to create the combined scatter plot
+plot_combined_nfeature_vs_ncount <- function(seurat_objects_list) {
+  combined_data <- data.frame()
+  
+  for (sample_name in names(seurat_objects_list)) {
+    # Access the Seurat object
+    seurat_obj <- seurat_objects_list[[sample_name]]
+    
+    # Check if the required metadata columns exist
+    if (!all(c("nFeature_RNA", "nCount_RNA", "doublet") %in% colnames(seurat_obj@meta.data))) {
+      stop("The Seurat object must contain 'nFeature_RNA', 'nCount_RNA', and 'doublet' in the metadata.")
+    }
+    
+    # Extract the data for plotting
+    plot_data <- seurat_obj@meta.data[, c("nFeature_RNA", "nCount_RNA", "doublet")]
+    plot_data$sample <- sample_name
+    
+    # Combine the data
+    combined_data <- rbind(combined_data, plot_data)
+  }
+  
+  # Create the scatter plot
+  p <- ggplot(combined_data, aes(x = nCount_RNA, y = nFeature_RNA, color = doublet, label = sample)) +
+    geom_point(size = 0.5) +
+    scale_color_manual(values = c("Singlet" = "#015EA8", "Doublet" = "#B56676")) +
+    labs(
+      x = "nCount_RNA",
+      y = "nFeature_RNA",
+      color = "Doublet Class"
+    ) +
+    ggtitle("Scatter plot of nFeature_RNA vs. nCount_RNA for All Samples") +
+    theme_minimal() +
+    facet_wrap(~sample, scales = "free")
+  
+  # Print the plot
+  print(p)
+  file_path <- file.path(plots_output_directory, paste0("DoubletFinder_", "scatterplot", ".png"))
+  ggsave(filename = file_path, plot = p, width = 8, height = 6)
+}
+
+# Example usage
+# Assuming 'cellbender_seurat_objects' is your list of Seurat objects
+plot_combined_nfeature_vs_ncount(cellbender_seurat_objects)
+```
+
+### Doublet violin plot and summary
+
+```{r doublet violin plot, message = FALSE}
+plot_doublet_qc <- function(seurat_objects_list,
+                            plot_dir = plots_output_directory,
+                            table_dir = data_output_directory) {
+  summaries <- lapply(names(seurat_objects_list), function(sample_name) {
+    seurat_obj <- seurat_objects_list[[sample_name]]
+
+    p <- VlnPlot(seurat_obj, 
+                 group.by = "doublet",
+                 features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.hb"),
+                 ncol = 2, 
+                 pt.size = 0,
+                 cols = doublet_cols) +
+      theme(legend.position = "right")
+    print(p)
+    ggsave(file.path(plot_dir, paste0("01_QC1_DoubletVlnPlot_", sample_name, ".png")),
+           plot = p, 
+           width = 10, height = 8, dpi = 300)
+
+    seurat_obj@meta.data %>%
+      group_by(orig.ident, doublet) %>%
+      summarise(total_count = n(), .groups = "drop") %>%
+      group_by(orig.ident) %>%
+      mutate(countT = sum(total_count)) %>%
+      group_by(orig.ident) %>%
+      mutate(percent = paste0(round(100 * total_count / countT, 2), "%")) %>%
+      ungroup()
+      
+      }) 
+  
+  combined <- dplyr::bind_rows(summaries)
+  write.csv(combined,
+            file = file.path(table_dir, "01_QC1_DoubletSummary_AllSamples.csv"),
+            quote = FALSE, row.names = FALSE)
+  
+  combined
+}
+
+doublet_summary <- plot_doublet_qc(cellbender_seurat_objects)
+
+```
+
+### Distribution of doublets removed
+
+```{r}
+# Visualize the distribution of doublets
+# Extract the doublets
+only_doublets <- doublet_summary %>% 
+  filter(doublet == "Doublet")
+
+only_doublets <- only_doublets %>%
+  mutate(group = case_when(
+    grepl("^RaHC", orig.ident) ~ "RaHC",
+    grepl("^HC",   orig.ident) ~ "HC",
+    grepl("^V",    orig.ident) ~ "V",
+    grepl("^S3",   orig.ident) ~ "S3",
+    TRUE ~ NA_character_
+  ),
+  percent_num = as.numeric(sub("%", "", percent))
+  ) 
+
+# Histogram
+p1 <- ggplot(data = only_doublets,
+            mapping = aes(x = percent_num)) +
+  geom_histogram(binwidth = 0.05, 
+                 fill = "#b56576", 
+                 color = "#0a014f") +
+  labs(title = "Distribution of Doublets removed",
+       x = "Percentage (%)")
+
+ggsave(filename = file.path(plots_output_directory, "01_QC1_BarplotDoubletDistribution.png"),
+       plot = p1,
+       width = 6, height = 5, dpi = 300)
+
+
+p2 <- ggplot(data = only_doublets,
+       mapping = aes(x = group,
+                     y = percent_num)) +
+  geom_boxplot(fill = "#b56576",
+               color = "#0a014f") +
+  labs(title = "Percentage of doublets removed per group",
+       x = "Group",
+       y = "Percentage of doublet removed (%)")
+
+ggsave(filename = file.path(plots_output_directory, "01_QC1_BoxplotDoubletDistribution.png"),
+       plot = p2,
+       width = 6, height = 5, dpi = 300)
+  
+```
+
+The samples with the weird pK values do not really look different from the others, so I will leave them as is for now.
+
+## Merge samples
+
+From one list with multiple seurat objects we are going to create one seurat object.
+
+```{r sample merge, message = FALSE, warning = FALSE}
+sampleID <- names(cellbender_seurat_objects)
+MergedObject <- merge(x = cellbender_seurat_objects[[1]],
+                      y = cellbender_seurat_objects[2 : length(cellbender_seurat_objects)],
+                      add.cell.ids = sampleID)
+```
+
+```{r}
+# Save merged seurat object
+saveRDS(MergedObject, file = file.path(RObjects_output_directory, "01_QC1_MergedObject.rds"))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
