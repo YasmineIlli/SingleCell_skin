@@ -4,7 +4,7 @@ author: "YasmineIlli"
 date: "2026-07-14"
 output: workflowr::wflow_html
 editor_options:
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
 
 *(adapted from Lumeng Li's code)*
@@ -16,13 +16,14 @@ editor_options:
 library(Seurat)
 library(tidyverse)
 library(DoubletFinder)
+library(here)
 ```
 
 ```{r}
 # Setup output directories
-data_output_directory <- "output/01_QC/data/QC1/"
-plots_output_directory <- "output/01_QC/plots/QC1/"
-RObjects_output_directory <- "output/01_QC/RObjects/QC1"
+data_output_directory <- here("output/01_QC/data/QC1/")
+plots_output_directory <- here("output/01_QC/plots/QC1/")
+RObjects_output_directory <- here("output/01_QC/RObjects/QC1")
 ```
 
 ```{r}
@@ -90,7 +91,7 @@ plot_Vln_qc_metrics <- function(seurat_objects_list, out_dir = plots_output_dire
                               "percent.ribo"),
                  ncol = 5,
                  group.by = "orig.ident",
-                 cols = "#B56676")
+                 cols = "#B56576")
     
     p[[1]] <- p[[1]] + ggtitle("nFeature")
     p[[2]] <- p[[2]] + ggtitle("nCount")
@@ -109,9 +110,21 @@ plot_Vln_qc_metrics <- function(seurat_objects_list, out_dir = plots_output_dire
 plot_Vln_qc_metrics(cellbender_seurat_objects)
 ```
 
-## Set individual thresholds
+## Set thresholds
+
+We are going to set global thresholds for:
+-   nFeature <500
+-   nCount < 30000
+-   hb_high < 5%
+
+Then for each sample we are going to put individual thresholds for upper nFeature and maximum mitochondrial percentage according to the violin plots of the qc metrics.
 
 ```{r thresholding}
+# global thresholds
+nFeature_low <- 500
+nCount_high <- 30000
+hb_high <- 5
+
 # List of thresholds per sample
 thresholds <- list(
   # Healthy controls
@@ -154,10 +167,14 @@ cellbender_seurat_objects <- lapply(names(cellbender_seurat_objects), function(s
   obj <- cellbender_seurat_objects[[s]]
   th  <- thresholds[[s]]
   md  <- obj@meta.data
-  keep <- rownames(md)[md$nFeature_RNA < th$nFeature_max &
-                       md$percent.mt   < th$mt_max]
+  keep <- rownames(md)[md$nFeature_RNA > nFeature_low &
+                       md$nFeature_RNA < th$nFeature_max &
+                       md$percent.mt   < th$mt_max &
+                       md$nCount_RNA   < nCount_high &
+                       md$percent.hb   < hb_high]
   subset(obj, cells = keep)
 })
+
 names(cellbender_seurat_objects) <- names(thresholds)
 
 # Cells remaining per sample
@@ -166,8 +183,7 @@ cells_after <- sapply(cellbender_seurat_objects, ncol)
 qc_summary <- tibble(
   sample = names(cells_before),
   cells_before = cells_before,
-  cells_after = cells_after[names(cells_before)],
-  row.names = NULL
+  cells_after = cells_after[names(cells_before)]
 )
 
 qc_summary %>% 
@@ -423,7 +439,7 @@ DF_list <- function(seurat_object_list, pK_list, DB_rate = 0.05, PCs = 1:35, pN 
     p <- DimPlot(seurat_obj, 
                  reduction = "umap", 
                  group.by = df_col,
-                 cols = c("Singlet" = "#015EA8", "Doublet" = "#B56676")) +
+                 cols = c("Singlet" = "#015EA8", "Doublet" = "#B56576")) +
             ggtitle(sample_name)
     
     print(p)
@@ -515,7 +531,7 @@ plot_combined_nfeature_vs_ncount <- function(seurat_objects_list) {
   # Create the scatter plot
   p <- ggplot(combined_data, aes(x = nCount_RNA, y = nFeature_RNA, color = doublet, label = sample)) +
     geom_point(size = 0.5) +
-    scale_color_manual(values = c("Singlet" = "#015EA8", "Doublet" = "#B56676")) +
+    scale_color_manual(values = c("Singlet" = "#015EA8", "Doublet" = "#B56576")) +
     labs(
       x = "nCount_RNA",
       y = "nFeature_RNA",
@@ -641,17 +657,26 @@ MergedObject <- merge(x = cellbender_seurat_objects[[1]],
                       add.cell.ids = sampleID)
 ```
 
+```{r clean meta data, message = FALSE, warning = FALSE}
+columns_to_remove <- grep("DF|pANN",
+                          colnames(MergedObject@meta.data),
+                          value = TRUE)
+#Remove these columns from the meta data
+MergedObject@meta.data[, columns_to_remove] <- NULL
+
+#Verify that these columns are gone
+colnames(MergedObject@meta.data)
+```
+
+
 ```{r}
 # Save merged seurat object
 saveRDS(MergedObject, file = file.path(RObjects_output_directory, "01_QC1_MergedObject.rds"))
 ```
 
-
-
-
-
-
-
+```{r}
+sessionInfo()
+```
 
 
 
