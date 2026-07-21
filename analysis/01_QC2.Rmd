@@ -1,0 +1,654 @@
+---
+title: "01_QC2"
+author: "YasmineIlli"
+date: "2026-07-17"
+output: workflowr::wflow_html
+editor_options:
+  chunk_output_type: inline
+---
+
+*(adapted from Lumeng Li's code)*
+
+## Setup
+
+```{r libraries, message = FALSE, warning = FALSE}
+library(Seurat)
+library(tidyverse)
+library(here)
+library(clustree)
+library(harmony)
+library(patchwork)
+library(presto)
+library(dittoSeq)
+```
+
+```{r output_directories, message = FALSE}
+# Setup output directories
+data_output_directory <- here("output/01_QC/data/QC2/")
+plots_output_directory <- here("output/01_QC/plots/QC2/")
+RObjects_output_directory <- here("output/01_QC/RObjects/QC2/")
+```
+
+```{r plot_settings, message = FALSE}
+# Plot settings
+theme_set(theme_classic())
+
+# Color palette
+pal <- c(
+  blue   = "#015EA8",
+  rose   = "#B56576",
+  blush  = "#FAE8EB",
+  navy   = "#0A014F",
+  brown  = "#3F220F"
+)
+
+# Group colours (4 groups: HC, RaHC, S3, V)
+group_cols <- c(V = "#015EA8", RaHC = "#B56576", S = "#3F220F", HC = "#0A014F")
+```
+
+```{r message = FALSE}
+# Load data
+MergedObject <- readRDS(here("output/01_QC/RObjects/QC1/01_QC1_MergedObject.rds"))
+```
+
+## Standard pipeline
+
+First check the distribution of nCount_RNA before and after normalization:
+
+```{r normalization, message = FALSE, warning = FALSE}
+set.seed(123)
+
+# Reusable histogram function for nCount_RNA distributions
+plot_ncount_hist <- function(seurat_obj, plot_title) {
+  ggplot(
+    seurat_obj[[]],
+    aes(x = nCount_RNA)
+  ) +
+    geom_histogram(
+      bins = 20,
+      fill = "#B56576",
+      color = "#FAE8EB"
+    ) +
+    theme_minimal() +
+    labs(
+      title = plot_title,
+      x = "nCount_RNA",
+      y = "Cell Count"
+    )
+}
+
+# Check median library size before normalization
+paste("Median library size:", median(MergedObject$nCount_RNA))
+
+# Plot nCount_RNA distribution before normalization
+hist_pre <- plot_ncount_hist(
+  MergedObject,
+  "nCount_RNA Distribution (Pre-Normalization)"
+)
+hist_pre
+
+ggsave(file = file.path(plots_output_directory, "01_QC2_HistogramPreNormalization.png"), 
+       plot = hist_pre, width = 6, height = 4, dpi = 300)
+
+# Normalize using median library size as the scale factor
+MergedObject <- NormalizeData(
+  MergedObject,
+  scale.factor = median(MergedObject$nCount_RNA)
+)
+
+# Plot nCount_RNA distribution after normalization
+# (distribution is unchanged here since scale.factor was already set to the median)
+hist_post <- plot_ncount_hist(
+  MergedObject,
+  "nCount_RNA Distribution (Post-Normalization)"
+)
+hist_post
+
+# ggsave(file.path(plots_output_directory, "01_QC2_HistogramPostNormalization.png"),
+#        plot = hist_post, width = 6, height = 4, dpi = 300)
+```
+
+The histogram is exactly the same because NormalizeData() doesn't change the nCount_RNA. We need to use "data" layer instead:
+
+```{r plot normalized, message = FALSE, warning = FALSE}
+# Recompute total counts from the normalized layer
+norm_counts <- colSums(
+  LayerData(MergedObject, layer = "data")
+)
+
+# Add to metadata for plotting
+MergedObject$nCount_norm <- norm_counts
+
+# Plot normalized totals
+hist_norm <- ggplot(
+  MergedObject[[]],
+  aes(x = nCount_norm)
+) +
+  geom_histogram(
+    bins = 20,
+    fill = "#B56576",
+    color = "#FAE8EB"
+  ) +
+  theme_minimal() +
+  labs(
+    title = "Recomputed Totals from Normalized Layer",
+    x = "Sum of log-normalized counts",
+    y = "Cell Count"
+  )
+hist_norm
+
+ggsave(file.path(plots_output_directory, "01_QC2_HistogramPostNormalization.png"), 
+       plot = hist_post, width = 6, height = 4, dpi = 300)
+```
+
+```{r highly variable genes, message = FALSE, warning = FALSE}
+# Highly variable genes
+set.seed(123)
+
+# Identify top 2000 variable features using the VST method
+MergedObject <- FindVariableFeatures(
+  MergedObject,
+  selection.method = "vst",
+  nfeatures = 2000
+)
+
+# Pull top 10 most variable genes
+top10 <- head(VariableFeatures(MergedObject), 10)
+top10
+
+# Plot variable features and label the top 10
+vf_plot <- VariableFeaturePlot(MergedObject)
+vf_plot_labeled <- LabelPoints(
+  plot = vf_plot,
+  points = top10,
+  repel = TRUE,
+  min.segment.length = 0,     
+  segment.color = "#3F220F",   
+  segment.size = 0.3,
+  box.padding = 0.8,           
+  max.overlaps = Inf           
+)
+
+vf_plot_labeled
+
+ggsave(filename = file.path(plots_output_directory, "01_QC2_VariableFeatures.png"), 
+       plot = vf_plot_labeled, width = 6, height = 4, dpi = 300)
+```
+
+```{r scale data, message = FALSE, waring = FALSE}
+# Scale Data
+set.seed(123)
+
+MergedObject <- ScaleData(MergedObject, 
+                          features = rownames(MergedObject))
+```
+
+```{r PCA, message = FALSE, warning = FALSE}
+# PCA
+set.seed(123)
+
+MergedObject <- RunPCA(MergedObject, 
+                       features = VariableFeatures(object = MergedObject),
+                       approx = FALSE, # to allow reproducibility
+                       npcs = 50,
+                       verbose = FALSE)
+
+# not important, more to be able to remove low quality cells later
+DimPlot(MergedObject, reduction = "pca")
+DimHeatmap(MergedObject, dims = 1:18, cells = 500, balanced = TRUE)
+
+# ElbowPlot
+elbowPlot <- ElbowPlot(MergedObject, ndims = 50, reduction = "pca")
+elbowPlot
+
+ggsave(filename = file.path(plots_output_directory, "01_QC2_ElbowPlot.png"),
+       plot = elbowPlot, width = 6, height = 4, dpi = 300)
+```
+
+```{r PC selection, message = FALSE, warning = FALSE}
+# Automatic PC selection
+# Extract PC standard deviations
+stdv <- MergedObject[["pca"]]@stdev[1:50]
+
+# Percent variation explained by each PC
+percent_stdv <- (stdv / sum(stdv)) * 100
+cumulative <- cumsum(percent_stdv)
+
+# Cutoff 1: first PC where cumulative variation exceeds 90% and individual PC explains < 5%
+co1 <- which(cumulative > 90 & percent_stdv < 5)[1]
+
+# Cutoff 2: last PC where the drop in variation to the next PC is > 0.05%
+co2 <- sort(
+  which(diff(percent_stdv) < -0.05),
+  decreasing = TRUE
+)[1] + 1
+
+co1
+co2
+
+# Use the more conservative of the two cutoffs
+selected_dim <- min(co1, co2)
+paste("selected dimenstions:", selected_dim)
+```
+
+```{r UMAP, message = FALSE, warning = FALSE}
+# UMAP
+set.seed(123)
+
+# Run UMAP on the selected PCs
+MergedObject <- RunUMAP(
+  MergedObject,
+  dims = 1:selected_dim
+)
+
+# UMAP before integration: unlabeled vs. coloured by sample
+umap_plain <- DimPlot(
+  MergedObject,
+  reduction = "umap"
+)
+
+umap_by_sample <- DimPlot(
+  MergedObject,
+  reduction = "umap",
+  group.by = "orig.ident"
+)
+
+umap_pre_integration <- umap_plain | umap_by_sample
+umap_pre_integration
+
+ggsave(filename = file.path(plots_output_directory, "01_QC2_umap_pre_integration.png"), 
+                            plot = umap_pre_integration, width = 12, height = 5, dpi = 300)
+```
+
+## Harmony Integration
+
+```{r Harmony Integration, message = FALSE, warning = FALSE}
+set.seed(123)
+
+# Run Harmony
+MergedObject <- IntegrateLayers(
+  object = MergedObject,
+  method = HarmonyIntegration,
+  orig.reduction = "pca",
+  new.reduction = "harmony",
+  group.by.vars = "orig.ident",
+  verbose = FALSE
+)
+
+# Check if harmony worked
+Reductions(MergedObject)
+head(MergedObject@meta.data)
+```
+
+```{r Plot integration, warning = FALSE, message = FALSE}
+# UMAP after Harmony
+set.seed(123)
+
+# Run UMAP again
+MergedObject <- RunUMAP(MergedObject, 
+                        reduction = "harmony",
+                        dims = 1:selected_dim,
+                        reduction.name = "umap_harmony")
+
+# Post-integration UMAP: unlabeled vs. coloured by sample
+umap_harmony_plain <- DimPlot(
+  MergedObject,
+  reduction = "umap_harmony"
+)
+
+umap_harmony_by_sample <- DimPlot(
+  MergedObject,
+  reduction = "umap_harmony",
+  group.by = "orig.ident"
+)
+
+umap_post_integration <- umap_harmony_plain | umap_harmony_by_sample
+umap_post_integration
+
+ggsave(
+  filename = file.path(plots_output_directory, "01_QC2_umap_post_integration.png"),
+  plot = umap_post_integration, width = 12, height = 5, dpi = 300
+)
+
+```
+
+## Clustering
+
+```{r FindNeighbors and FindClusters, message = FALSE, warning = FALSE}
+set.seed(123)
+
+# Combine counts layers of each sample to one
+MergedObject[["RNA"]] <- JoinLayers(MergedObject[["RNA"]])
+
+MergedObject <- FindNeighbors(MergedObject,
+                              reduction = "harmony",
+                              dims = 1:selected_dim)
+
+MergedObject <- FindClusters(MergedObject,
+                             resolution = seq(0.1, 0.9, by = 0.1))
+
+head(MergedObject@meta.data)
+```
+
+```{r Clustree, message = FALSE, warning = FALSE, fig.height=8, fig.width=12}
+set.seed(123)
+
+clustree_plot <- clustree(MergedObject@meta.data[
+  , grep("RNA_snn_res",
+         colnames(MergedObject@meta.data))
+], prefix = "RNA_snn_res.")
+
+clustree_plot
+
+ggsave(filename = file.path(plots_output_directory, "01_QC2_clustree.png"),
+       plot = clustree_plot, width = 14, height = 10, dpi = 300)
+```
+
+```{r UMAPs at different resolution, message = FALSE, warning = FALSE, fig.height=10, fig.width=12}
+set.seed(123)
+
+umap_res_sweep <- DimPlot(
+  MergedObject,
+  reduction = "umap_harmony",
+  group.by = c(
+    "RNA_snn_res.0.1",
+    "RNA_snn_res.0.2",
+    "RNA_snn_res.0.3",
+    "RNA_snn_res.0.4",
+    "RNA_snn_res.0.5",
+    "RNA_snn_res.0.6",
+    "RNA_snn_res.0.7",
+    "RNA_snn_res.0.8",
+    "RNA_snn_res.0.9"
+  ),
+  ncol = 3
+)
+umap_res_sweep
+
+ggsave(
+  filename = file.path(plots_output_directory, "01_QC2_UMAPdifferentResolutions.png"),
+  plot = umap_res_sweep,
+  width = 15,
+  height = 15,
+  dpi = 300
+)
+```
+
+```{r samples per cluster, message = F, warning = F, fig.height=10, fig.width=12}
+set.seed(123)
+
+# All resolution columns to plot
+resolutions <- grep(
+  "RNA_snn_res",
+  colnames(MergedObject@meta.data),
+  value = TRUE
+)
+
+# Stacked proportion bar of orig.ident within each cluster, one panel per resolution
+sample_prop_plots <- lapply(resolutions, function(res) {
+  MergedObject@meta.data %>%
+    count(
+      cluster = .data[[res]],
+      orig.ident
+    ) %>%
+    group_by(cluster) %>%
+    mutate(proportion = n / sum(n)) %>%
+    ungroup() %>%
+    ggplot(
+      aes(x = cluster, y = proportion, fill = orig.ident)
+    ) +
+    geom_col(color = "black", linewidth = 0.2) +
+    scale_y_continuous(labels = scales::percent) +
+    theme_minimal() +
+    labs(title = res, x = NULL, y = "Proportion of cells", fill = "Sample")
+})
+
+sample_prop_by_cluster <- wrap_plots(sample_prop_plots, ncol = 2) +
+  plot_layout(guides = "collect")
+sample_prop_by_cluster
+
+ggsave(
+  filename = file.path(plots_output_directory, "01_QC2_SamplePropInClusters.png"),
+  plot = sample_prop_by_cluster,
+  width = 18,
+  height = 16,
+  dpi = 300
+)
+```
+
+
+## Double proportion plots
+
+We are only going to plot the doublet proportion per cluster to see if there are clusters that should be removed.
+
+```{r doublet proportion, message = FALSE, warning = FALSE}
+# Doublet fraction per cluster at the chosen resolution
+doublet_by_cluster <- MergedObject@meta.data %>%
+  group_by(
+    cluster = .data[["RNA_snn_res.0.2"]],
+    doublet
+  ) %>%
+  summarise(
+    n = n(),
+    .groups = "drop"
+  ) %>%
+  group_by(cluster) %>%
+  mutate(
+    proportion = n / sum(n)
+  ) %>%
+  ungroup()
+
+doublet_by_cluster
+
+write.csv(
+  doublet_by_cluster,
+  file.path(data_output_directory, "01_QC2_doublet.csv"),
+  row.names = FALSE
+)
+
+# Stacked bar: doublet vs singlet composition of each cluster
+doublet_composition_plot <- ggplot(
+  doublet_by_cluster,
+  aes(
+    x = cluster,
+    y = proportion,
+    fill = doublet
+  )
+) +
+  geom_col() +
+  scale_fill_manual(
+    values = c(
+      "Singlet" = "#FAE8EB",
+      "Doublet" = "#B56576"
+    )
+  ) +
+  scale_y_continuous(labels = scales::percent) +
+  theme_minimal() +
+  labs(
+    x = "Cluster (res 0.2)",
+    y = "Proportion of cells",
+    fill = NULL
+  )
+doublet_composition_plot
+
+ggsave(
+  filename = file.path(plots_output_directory, "01_QC2_doublet_composition_per_cluster.png"),
+  plot = doublet_composition_plot,
+  width = 8,
+  height = 5,
+  dpi = 300
+)
+
+# Where doublets sit on the UMAP
+umap_doublets <- DimPlot(
+  MergedObject,
+  reduction = "umap_harmony",
+  group.by = "doublet",
+  order = "Doublet",          # draw doublets on top so they aren't buried
+  cols = c(
+    "Singlet" = "#FAE8EB",
+    "Doublet" = "#B56576"
+  )
+)
+umap_doublets
+
+ggsave(
+  filename = file.path(plots_output_directory, "01_QC2_umap_doublets.png"),
+  plot = umap_doublets,
+  width = 7,
+  height = 5,
+  dpi = 300
+)
+```
+
+## Set Resolution
+
+Selected resolution according to expected number of clusters.
+
+```{r set resolution, message = F, warning = F}
+MergedObject <- SetIdent(MergedObject,
+                         value = MergedObject$RNA_snn_res.0.2)
+
+head(MergedObject@active.ident)
+```
+
+```{r umap_selected_resolution, message = F, warning = F, fig.height=8, fig.width=12}
+set.seed(123)
+
+umap_selected_res <- DimPlot(MergedObject,
+                             reduction = "umap_harmony",
+                             group.by = "RNA_snn_res.0.2",
+                             label = TRUE)
+umap_selected_res
+
+ggsave(filename = file.path(plots_output_directory, "01_QC2_UMAPselectedRes.png"),
+       plot = umap_selected_res,
+       width = 12, 
+       height = 5,
+       dpi = 300)
+
+# Visualize per sample
+umap_selected_res_PerSample <- DimPlot(MergedObject,
+                                      reduction = "umap_harmony",
+                                      group.by = "RNA_snn_res.0.2",
+                                      split.by = "orig.ident",
+                                      label = TRUE)
+
+umap_selected_res_PerSample
+
+ggsave(filename = file.path(plots_output_directory, "01_QC2_UMAPselectedRes_perSample.png"),
+       plot = umap_selected_res_PerSample,
+       width = 12, 
+       height = 5,
+       dpi = 300)
+```
+
+## Find Markers
+
+```{r find markers, message = F, warning = F}
+set.seed(123)
+
+#top 25 marker genes per cluster
+MergedObject_Markers <- FindAllMarkers(
+  object = MergedObject,
+  only.pos = TRUE,
+  test.use = "wilcox",
+  logfc.threshold = 0.25,
+  min.pct = 0.2,
+  min.cells.feature = 5,
+  return.thresh = 0.05
+  )
+
+top10_by_cluster <- MergedObject_Markers %>% 
+  dplyr::filter(p_val_adj <= 0.05) %>% 
+  dplyr::group_by(cluster) %>% 
+  dplyr::slice_max(order_by = avg_log2FC,
+                   n = 10,
+                   with_ties = TRUE) %>% 
+  dplyr::ungroup() %>% 
+  dplyr::arrange(cluster, dplyr::desc(avg_log2FC))
+
+#get a preview
+print(top10_by_cluster, n = 30)
+
+#make a table
+write_csv(top10_by_cluster, 
+          file = file.path(data_output_directory, "01_QC2_top10_by_cluster.csv"))
+```
+
+```{r marker dotplot, message = FALSE, warning = FALSE, fig.height=9, fig.width=12}
+# Top 3 markers per cluster for the dotplot
+top3_by_cluster <- MergedObject_Markers %>% 
+  filter(p_val_adj <= 0.05) %>% 
+  group_by(cluster) %>% 
+  top_n(n = 3,
+        wt = avg_log2FC)
+
+dotplot_top3 <- dittoDotPlot(MergedObject,
+                             vars = unique(top3_by_cluster$gene),
+                             group.by = "RNA_snn_res.0.2",
+                             size = 5)
+
+ggsave(file.path(plots_output_directory, 
+                 "01_QC2_DotPlot_Top3VariableGenes.png"),
+       plot = dotplot_top3,
+       width = 12,
+       height = 9,
+       dpi = 300)
+```
+
+```{r marker heatmap, message = FALSE, warning = FALSE, fig.height=9, fig.width=12}
+top5_by_cluster <- MergedObject_Markers %>% 
+  filter(p_val_adj <= 0.05) %>% 
+  group_by(cluster) %>% 
+  top_n(n = 5,
+        wt = avg_log2FC)
+
+heatmap_top5 <- DoHeatmap(MergedObject,
+                          features = top5_by_cluster$gene) +
+  NoLegend()
+
+heatmap_top5
+
+ggsave(file.path(plots_output_directory, 
+                 "01_QC2_Heatmap_Top5VariableFeatures.png"),
+       plot = heatmap_top5,
+       width = 16,
+       height = 12,
+       dpi = 300)
+```
+
+## Doublet removal
+
+```{r doublet removal, message = FALSE, warning = FALSE}
+# Counts before removal
+Idents(MergedObject) <- MergedObject@meta.data$doublet
+table(MergedObject$doublet)
+
+table(MergedObject@meta.data$orig.ident)
+
+# Save Object before doublet removal
+# saveRDS(MergedObject, file.path(RObjects_output_directory,
+#                                 "01_QC2_MergedObject_before_doublet_removal.rds"))
+
+# Keep only singlets 
+MergedObject <- subset(MergedObject,
+                       idents = "Singlet")
+
+table(MergedObject$doublet)
+
+table(MergedObject@meta.data$orig.ident)
+```
+
+```{r save object with removed doublets, message = FALSE, warning = FALSE}
+saveRDS(
+  MergedObject,
+  file.path(RObjects_output_directory, "01_QC2_MergedObject_after_doublet_removal.rds")
+)
+```
+
+```{r}
+sessionInfo()
+```
+
+
