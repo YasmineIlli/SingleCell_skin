@@ -1,0 +1,1647 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="YasmineIlli" />
+
+<meta name="date" content="2026-07-22" />
+
+<title>01_QC3</title>
+
+<script src="site_libs/header-attrs-2.30/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.13.2/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/font-awesome-6.5.2/css/all.min.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet" />
+
+<link rel="icon" href="https://github.com/workflowr/workflowr-assets/raw/main/img/reproducible.png">
+<!-- Add a small amount of space between sections. -->
+<style type="text/css">
+div.section {
+  padding-top: 12px;
+}
+</style>
+
+
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "\e258";
+  font-family: 'Glyphicons Halflings';
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">SingleCell_skin</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li>
+  <a href="about.html">About</a>
+</li>
+<li>
+  <a href="license.html">License</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://github.com/YasmineIlli/SingleCell_skin">
+    <span class="fab fa-github"></span>
+     
+    Source code
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">01_QC3</h1>
+<h4 class="author">YasmineIlli</h4>
+<h4 class="date">2026-07-22</h4>
+
+</div>
+
+
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-report" data-toggle="collapse" data-target="#workflowr-report">
+<span class="glyphicon glyphicon-list" aria-hidden="true"></span>
+workflowr <span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span>
+</button>
+</p>
+<div id="workflowr-report" class="collapse">
+<ul class="nav nav-tabs">
+<li class="active">
+<a data-toggle="tab" href="#summary">Summary</a>
+</li>
+<li>
+<a data-toggle="tab" href="#checks"> Checks <span
+class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span>
+</a>
+</li>
+<li>
+<a data-toggle="tab" href="#versions">Past versions</a>
+</li>
+</ul>
+<div class="tab-content">
+<div id="summary" class="tab-pane fade in active">
+<p>
+<strong>Last updated:</strong> 2026-07-22
+</p>
+<p>
+<strong>Checks:</strong> <span
+class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> 7
+<span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> 0
+</p>
+<p>
+<strong>Knit directory:</strong> <code>SingleCell_skin/</code> <span
+class="glyphicon glyphicon-question-sign" aria-hidden="true"
+title="This is the local directory in which the code in this file was executed.">
+</span>
+</p>
+<p>
+This reproducible <a href="https://rmarkdown.rstudio.com">R Markdown</a>
+analysis was created with <a
+  href="https://github.com/workflowr/workflowr">workflowr</a> (version
+1.7.2). The <em>Checks</em> tab describes the reproducibility checks
+that were applied when the results were created. The <em>Past
+versions</em> tab lists the development history.
+</p>
+<hr>
+</div>
+<div id="checks" class="tab-pane fade">
+<div id="workflowr-checks" class="panel-group">
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRMarkdownfilestronguptodate">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>R Markdown file:</strong> up-to-date
+</a>
+</p>
+</div>
+<div id="strongRMarkdownfilestronguptodate"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great! Since the R Markdown file has been committed to the Git
+repository, you know the exact version of the code that produced these
+results.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongEnvironmentstrongempty">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Environment:</strong> empty </a>
+</p>
+</div>
+<div id="strongEnvironmentstrongempty" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! The global environment was empty. Objects defined in the
+global environment can affect the analysis in your R Markdown file in
+unknown ways. For reproduciblity it’s best to always run the code in an
+empty environment.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSeedstrongcodesetseed20260714code">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Seed:</strong>
+<code>set.seed(20260714)</code> </a>
+</p>
+</div>
+<div id="strongSeedstrongcodesetseed20260714code"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>The command <code>set.seed(20260714)</code> was run prior to running
+the code in the R Markdown file. Setting a seed ensures that any results
+that rely on randomness, e.g. subsampling or permutations, are
+reproducible.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSessioninformationstrongrecorded">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Session information:</strong>
+recorded </a>
+</p>
+</div>
+<div id="strongSessioninformationstrongrecorded"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Recording the operating system, R version, and package
+versions is critical for reproducibility.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongCachestrongnone">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Cache:</strong> none </a>
+</p>
+</div>
+<div id="strongCachestrongnone" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Nice! There were no cached chunks for this analysis, so you can be
+confident that you successfully produced the results during this
+run.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongFilepathsstrongrelative">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>File paths:</strong> relative </a>
+</p>
+</div>
+<div id="strongFilepathsstrongrelative" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Using relative paths to the files within your workflowr
+project makes it easier to run your code on other machines.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomYasmineIlliSingleCellskintree62079e08abdceb0359c412bbede2c91aff88f9fatargetblank62079e0a">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Repository version:</strong>
+<a href="https://github.com/YasmineIlli/SingleCell_skin/tree/62079e08abdceb0359c412bbede2c91aff88f9fa" target="_blank">62079e0</a>
+</a>
+</p>
+</div>
+<div
+id="strongRepositoryversionstrongahrefhttpsgithubcomYasmineIlliSingleCellskintree62079e08abdceb0359c412bbede2c91aff88f9fatargetblank62079e0a"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>
+Great! You are using Git for version control. Tracking code development
+and connecting the code version to the results is critical for
+reproducibility.
+</p>
+<p>
+The results in this page were generated with repository version
+<a href="https://github.com/YasmineIlli/SingleCell_skin/tree/62079e08abdceb0359c412bbede2c91aff88f9fa" target="_blank">62079e0</a>.
+See the <em>Past versions</em> tab to see a history of the changes made
+to the R Markdown and HTML files.
+</p>
+<p>
+Note that you need to be careful to ensure that all relevant files for
+the analysis have been committed to Git prior to generating the results
+(you can use <code>wflow_publish</code> or
+<code>wflow_git_commit</code>). workflowr only checks the R Markdown
+file, but you know if there are other scripts or data files that it
+depends on. Below is the status of the Git repository when the results
+were generated:
+</p>
+<pre><code>
+Ignored files:
+    Ignored:    .RData
+    Ignored:    .Rhistory
+    Ignored:    .Rproj.user/
+    Ignored:    analysis/figure/
+    Ignored:    analysis/output/
+    Ignored:    output/01_QC/
+
+Untracked files:
+    Untracked:  renv/
+
+Unstaged changes:
+    Modified:   .Rprofile
+    Modified:   .gitignore
+
+</code></pre>
+<p>
+Note that any generated files, e.g. HTML, png, CSS, etc., are not
+included in this status report because it is ok for generated content to
+have uncommitted changes.
+</p>
+</div>
+</div>
+</div>
+</div>
+<hr>
+</div>
+<div id="versions" class="tab-pane fade">
+<p>
+These are the previous versions of the repository in which changes were
+made to the R Markdown (<code>analysis/01_QC3.Rmd</code>) and HTML
+(<code>docs/01_QC3.html</code>) files. If you’ve configured a remote Git
+repository (see <code>?wflow_git_remote</code>), click on the hyperlinks
+in the table below to view the files as they were in that past version.
+</p>
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+File
+</th>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+<th>
+Message
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/YasmineIlli/SingleCell_skin/blob/62079e08abdceb0359c412bbede2c91aff88f9fa/analysis/01_QC3.Rmd" target="_blank">62079e0</a>
+</td>
+<td>
+YasmineIlli
+</td>
+<td>
+2026-07-22
+</td>
+<td>
+wflow_git_commit("analysis/01_QC3.Rmd")
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<hr>
+</div>
+</div>
+</div>
+<p><em>(adapted from Lumeng Li’s code)</em></p>
+<div id="setup" class="section level2">
+<h2>Setup</h2>
+<pre class="r"><code>library(Seurat)
+library(tidyverse)
+library(here)
+library(clustree)
+library(harmony)
+library(patchwork)
+library(presto)
+library(dittoSeq)</code></pre>
+<pre class="r"><code># Colour palette
+palette_primary   &lt;- &quot;#015EA8&quot;   # presentation text only, use minimally
+palette_mauve     &lt;- &quot;#B56576&quot;   # main fill colour
+palette_blush     &lt;- &quot;#FAE8EB&quot;   # secondary / light fill
+palette_navy      &lt;- &quot;#0A014F&quot;   # contrast fill
+palette_brown     &lt;- &quot;#3F220F&quot;   # contrast fill
+
+# Discrete palette for categorical plots (clusters, samples, groups)
+palette_discrete &lt;- c(palette_mauve,
+                      palette_navy,
+                      palette_brown,
+                      palette_blush,
+                      palette_primary)
+
+# Continuous ramp: light blush -&gt; mauve -&gt; navy
+palette_continuous &lt;- c(palette_blush,
+                        palette_mauve,
+                        palette_navy)
+
+theme_set(theme_minimal())</code></pre>
+<pre class="r"><code>data_output_directory &lt;- here(&quot;output/01_QC/data/QC3/&quot;)
+plots_output_directory &lt;- here(&quot;output/01_QC/plots/QC3/&quot;)
+RObjects_output_directory &lt;- here(&quot;output/01_QC/RObjects/QC3/&quot;)</code></pre>
+<pre class="r"><code>MergedObject &lt;- readRDS(here(&quot;output/01_QC/RObjects/QC2/01_QC2_MergedObject_after_doublet_removal.rds&quot;))</code></pre>
+<pre class="r"><code>#remove unused resolutions, clean up meta.data
+MergedObject@meta.data$RNA_snn_res.0.1 &lt;- NULL
+MergedObject@meta.data$RNA_snn_res.0.2 &lt;- NULL
+MergedObject@meta.data$RNA_snn_res.0.4 &lt;- NULL
+MergedObject@meta.data$RNA_snn_res.0.5 &lt;- NULL
+MergedObject@meta.data$RNA_snn_res.0.6 &lt;- NULL
+MergedObject@meta.data$RNA_snn_res.0.7 &lt;- NULL
+MergedObject@meta.data$RNA_snn_res.0.8 &lt;- NULL
+MergedObject@meta.data$RNA_snn_res.0.9 &lt;- NULL
+MergedObject@meta.data$RNA_snn_res.1 &lt;- NULL
+
+head(MergedObject@meta.data)</code></pre>
+<pre><code>                         orig.ident nCount_RNA nFeature_RNA percent.mt
+HC001_AAACCCAAGTTATGGA-1      HC001       6083         2257  18.411968
+HC001_AAACCCACAATGAACA-1      HC001       9596         2841   7.690704
+HC001_AAACCCACACCACTGG-1      HC001      13198         3137  17.608729
+HC001_AAACCCAGTGGATTTC-1      HC001      20340         3928  11.607670
+HC001_AAACCCATCCTAAACG-1      HC001       9317         2735   6.053451
+HC001_AAACCCATCTAAACGC-1      HC001      19053         3742  11.530992
+                          percent.hb percent.ribo RNA_snn_res.0.3
+HC001_AAACCCAAGTTATGGA-1 0.000000000     9.156666              20
+HC001_AAACCCACAATGAACA-1 0.000000000    12.932472               3
+HC001_AAACCCACACCACTGG-1 0.007576906    26.466131               0
+HC001_AAACCCAGTGGATTTC-1 0.009832842    30.776794               0
+HC001_AAACCCATCCTAAACG-1 0.010733069    19.437587               3
+HC001_AAACCCATCTAAACGC-1 0.015745552    33.910670              17
+                         seurat_clusters doublet nCount_norm
+HC001_AAACCCAAGTTATGGA-1              27 Singlet    3052.648
+HC001_AAACCCACAATGAACA-1               2 Singlet    3294.847
+HC001_AAACCCACACCACTGG-1               1 Singlet    3040.490
+HC001_AAACCCAGTGGATTTC-1               4 Singlet    3056.211
+HC001_AAACCCATCCTAAACG-1              14 Singlet    3176.429
+HC001_AAACCCATCTAAACGC-1              25 Singlet    2951.497</code></pre>
+</div>
+<div id="check-data" class="section level2">
+<h2>Check data</h2>
+<pre class="r"><code># Median library size - used below as the normalisation scale factor
+median_counts &lt;- median(MergedObject$nCount_RNA)
+median_counts</code></pre>
+<pre><code>[1] 10057</code></pre>
+<pre class="r"><code>p &lt;- ggplot(MergedObject@meta.data,
+            aes(x = nCount_RNA)) +
+  geom_histogram(bins = 20,
+                 fill = palette_mauve,
+                 colour = &quot;white&quot;) +
+  labs(x = &quot;nCount_RNA&quot;,
+       y = &quot;Count&quot;)
+
+p</code></pre>
+<p><img src="figure/01_QC3.Rmd/plotting%20normalization-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggsave(filename = file.path(plots_output_directory, &quot;01_QC3_nCount_histogram.png&quot;),
+       plot = p,
+       width = 8,
+       height = 6)</code></pre>
+<p>We are going to normalize the data again because doublet removal and
+integration can change the data. But first we need to check if what we
+would be normalizing. We only want to normalize raw counts not already
+normalized data, since this normalizing normalized data would distort
+the values.</p>
+<pre class="r"><code>range(LayerData(MergedObject,
+                layer = &quot;counts&quot;)@x)</code></pre>
+<pre><code>[1]     1 14971</code></pre>
+<p>The output should be whole numbers e.g. 0 4523. In that case we can
+normalize the data. If it’s not whole numbers e.g. 0.00 12.743 the
+values are already normalized. Normally NormalizeData() takes counts and
+puts normalized data in data slots, so it should be fine, but sometimes
+it can be corrupted so it is always safer to check.</p>
+</div>
+<div id="standard-pipeline" class="section level2">
+<h2>Standard Pipeline</h2>
+<pre class="r"><code>MergedObject &lt;- NormalizeData(MergedObject,
+                              scale.factor = median(MergedObject$nCount_RNA))</code></pre>
+<p>Now we can visualize the counts and data before and after
+normalization. Normalization does not change nCount_RNA so doing a
+histogram of nCount_RNA (like Lumeng did) is not useful for visualizing
+normalization.</p>
+<pre class="r"><code># Subsample non-zero entries from both layers for a fast distribution comparison
+n_sample &lt;- 1e5
+
+raw_values &lt;- LayerData(MergedObject,
+                        layer = &quot;counts&quot;)@x
+norm_values &lt;- LayerData(MergedObject,
+                         layer = &quot;data&quot;)@x
+
+expression_df &lt;- bind_rows(tibble(expression = sample(raw_values,
+                                                      n_sample),
+                                  type = &quot;Raw counts&quot;),
+                           tibble(expression = sample(norm_values,
+                                                      n_sample),
+                                  type = &quot;Normalized data&quot;)) |&gt;
+  mutate(type = fct_relevel(type,
+                            &quot;Raw counts&quot;,
+                            &quot;Normalized data&quot;))
+
+p &lt;- ggplot(expression_df,
+            aes(x = expression)) +
+  geom_histogram(bins = 50,
+                 fill = palette_mauve,
+                 colour = &quot;white&quot;) +
+  facet_wrap(~ type,
+             scales = &quot;free&quot;) +
+  labs(x = &quot;Expression&quot;,
+       y = &quot;Count&quot;)
+
+p</code></pre>
+<p><img src="figure/01_QC3.Rmd/histogram%20bf%20and%20af%20normalization-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggsave(filename = file.path(plots_output_directory, &quot;01_QC3_nCount_histogram_bf_af_normalization.png&quot;),
+       plot = p,
+       width = 10,
+       height = 5)</code></pre>
+<p>Raw counts usually have an extreme right skew with most values near 0
+and a long tail. Normalized data should be compressed and more symmetric
+with values roughly from 0-10.</p>
+<p>Now we are going to run all standard steps again, because each step
+that changes the number of cells (like doublet removal) can have
+downstream effects, so we should do it again to get the final qc-ed
+object.</p>
+<pre class="r"><code>MergedObject &lt;- FindVariableFeatures(MergedObject,
+                                     selection.method = &quot;vst&quot;,
+                                     nfeatures = 2000)
+top10 &lt;- head(VariableFeatures(MergedObject), 10)
+top10</code></pre>
+<pre><code> [1] &quot;DCD&quot;     &quot;SCGB2A2&quot; &quot;SLURP1&quot;  &quot;MUCL1&quot;   &quot;CCL4&quot;    &quot;CCL3&quot;    &quot;CCL3L3&quot; 
+ [8] &quot;PIP&quot;     &quot;CXCL9&quot;   &quot;CCL4L2&quot; </code></pre>
+<pre class="r"><code>vf_plot &lt;- VariableFeaturePlot(MergedObject)
+vf_plot &lt;- LabelPoints(plot = vf_plot,
+            points = top10,
+            repel = TRUE)</code></pre>
+<pre><code>When using repel, set xnudge and ynudge to 0 for optimal results</code></pre>
+<pre class="r"><code>vf_plot</code></pre>
+<pre><code>Warning in scale_x_log10(): log-10 transformation introduced infinite values.</code></pre>
+<p><img src="figure/01_QC3.Rmd/variable%20feature%20plot-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggsave(filename = file.path(plots_output_directory, &quot;01_QC3_VariableFeatures.png&quot;),
+       plot = vf_plot,
+       width = 8,
+       height = 6)</code></pre>
+<pre><code>Warning in scale_x_log10(): log-10 transformation introduced infinite values.</code></pre>
+<pre class="r"><code>set.seed(123)
+MergedObject &lt;- ScaleData(MergedObject,
+                          features = VariableFeatures(MergedObject), # Changed this from all genes to only variablefeatures to make it computationally less expensive (run faster and less memory used) and the only downstream process using it for now is PCA which will run on variablefeatures only anyways
+                          vars.to.regress = c(&quot;percent.mt&quot;,
+                                              &quot;percent.hb&quot;))</code></pre>
+<pre class="r"><code>set.seed(123)
+#approx=FALSE for reproducibility regardless of the CPU
+#because approx=FALSE calculates all different PCs we set a max to npcs=50, because we do not need more than 1000
+MergedObject &lt;- RunPCA(MergedObject,
+                       features = VariableFeatures(object = MergedObject),
+                       verbose = FALSE,
+                       approx = FALSE,
+                       npcs = 50,
+                       reduction.name = &quot;pca_DR&quot;)</code></pre>
+<pre><code>Warning: Key &#39;PC_&#39; taken, using &#39;pcadr_&#39; instead</code></pre>
+<pre class="r"><code>p &lt;- DimPlot(MergedObject,
+             reduction = &quot;pca_DR&quot;)
+
+p</code></pre>
+<p><img src="figure/01_QC3.Rmd/PCA-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggsave(filename = file.path(plots_output_directory, 
+                            &quot;01_QC3_PC_DimPlot.png&quot;),
+       plot = p,
+       width = 10)</code></pre>
+<pre class="r"><code>set.seed(123)
+p &lt;- DimHeatmap(MergedObject,
+                 reduction = &quot;pca_DR&quot;,
+                 dims = 1:18,
+                 cells = 500,
+                 balanced = TRUE,
+                 fast = FALSE # To make it return a ggplot object
+                ) &amp;
+  scale_fill_gradient2(low = palette_navy,
+                       mid = palette_blush,
+                       high = palette_mauve,
+                       midpoint = 0)
+
+p</code></pre>
+<p><img src="figure/01_QC3.Rmd/PC%20heatmap-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggsave(filename = file.path(plots_output_directory, 
+                            &quot;01_QC3_PC_Heatmap.png&quot;),
+       plot = p,
+       height = 20,
+       width = 18,
+       dpi = 900)</code></pre>
+<pre class="r"><code>p &lt;- ElbowPlot(MergedObject,
+               ndims = 50,
+               reduction = &quot;pca_DR&quot;)
+
+p</code></pre>
+<p><img src="figure/01_QC3.Rmd/ElbowPlot-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggsave(filename = file.path(plots_output_directory, 
+                            &quot;01_QC3_ElbowPlot.png&quot;),
+       plot = p)</code></pre>
+<p>PC selection criteria:</p>
+<ul>
+<li><p>co1: number of PCs reaching &gt;90% cumulative variance while
+each individual PC contributes &lt;5%</p></li>
+<li><p>co2: the last PC that still shows a &gt;0.05% drop in variance
+relative to the previous PC</p></li>
+</ul>
+<p>The lower of the two is used.</p>
+<pre class="r"><code># approx = FALSE returns stdev for all PCs regardless of npcs, so slice to 50
+stdv &lt;- MergedObject[[&quot;pca_DR&quot;]]@stdev[1:50]
+percent_stdv &lt;- (stdv/sum(stdv)) * 100
+
+cumulative &lt;- cumsum(percent_stdv)
+
+# co1: cumulative variance above 90% and individual contribution below 5%
+co1 &lt;- which(cumulative &gt; 90 &amp; percent_stdv &lt; 5)[1]
+
+# co2: last PC with a drop in variance greater than 0.05 percentage points
+co2 &lt;- sort(which((percent_stdv[1:length(percent_stdv) - 1] - 
+                     percent_stdv[2:length(percent_stdv)]) &gt;
+                    0.05),
+            decreasing = T)[1] + 1
+
+#select the number of PCs (dims)
+selected_dim &lt;- min(co1, co2)
+
+c(co1 = co1,
+  co2 = co2,
+  selected_dim = selected_dim)</code></pre>
+<pre><code>         co1          co2 selected_dim 
+          41           32           32 </code></pre>
+</div>
+<div id="harmony-integration" class="section level2">
+<h2>Harmony integration</h2>
+<pre class="r"><code>set.seed(123)
+
+MergedObject &lt;- RunHarmony(object = MergedObject,
+                           group.by.vars = &quot;orig.ident&quot;,
+                           reduction = &quot;pca_DR&quot;,
+                           reduction.save = &quot;harmony_DR&quot;,
+                           verbose = FALSE,
+                           dims.use = 1:selected_dim)
+
+#Check that harmony reduction is saved and the seurat object is ok
+Reductions(MergedObject)</code></pre>
+<pre><code>[1] &quot;pca&quot;          &quot;umap&quot;         &quot;harmony&quot;      &quot;umap_harmony&quot; &quot;pca_DR&quot;      
+[6] &quot;harmony_DR&quot;  </code></pre>
+<pre class="r"><code>set.seed(123)
+
+# reduction.name keeps the pre-doublet-removal UMAPs intact for comparison below
+MergedObject &lt;- RunUMAP(MergedObject,
+                        reduction = &quot;harmony_DR&quot;,
+                        dims = 1:selected_dim,
+                        reduction.name = &quot;umap_harmony_DR&quot;)</code></pre>
+<p>We can compare the umaps on the doublet removed data set with the
+RunUMAP before integration and doublet removal, with RunUMAP after
+integration and before doublet removal and the RunUMAP after integration
+and doublet removal:</p>
+<pre class="r"><code># Build all six panels in one pass over the reduction names
+umap_reductions &lt;- c(&quot;umap&quot;,
+                     &quot;umap_harmony&quot;,
+                     &quot;umap_harmony_DR&quot;)
+
+umap_panels &lt;- map(umap_reductions,
+                   ~ DimPlot(MergedObject,
+                             reduction = .x,
+                             cols = palette_discrete) |
+                     DimPlot(MergedObject,
+                             reduction = .x,
+                             group.by = &quot;orig.ident&quot;))
+
+p &lt;- wrap_plots(umap_panels,
+                ncol = 1)
+
+p</code></pre>
+<p><img src="figure/01_QC3.Rmd/UMAP%20comparison-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggsave(filename = file.path(plots_output_directory, 
+                            &quot;01_QC3_UMAP_comparison.png&quot;),
+       plot = p,
+       width = 14,
+       height = 18)</code></pre>
+</div>
+<div id="clustering" class="section level2">
+<h2>Clustering</h2>
+<pre class="r"><code>set.seed(123)
+
+MergedObject &lt;- FindNeighbors(MergedObject,
+                              reduction = &quot;harmony_DR&quot;,
+                              dims = 1:selected_dim)
+
+MergedObject &lt;- FindClusters(MergedObject,
+                             resolution = seq(0.1, 
+                                              1.0,
+                                              by = 0.1))</code></pre>
+<pre><code>Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
+
+Number of nodes: 91948
+Number of edges: 3292353
+
+Running Louvain algorithm...
+Maximum modularity in 10 random starts: 0.9822
+Number of communities: 15
+Elapsed time: 44 seconds
+Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
+
+Number of nodes: 91948
+Number of edges: 3292353
+
+Running Louvain algorithm...
+Maximum modularity in 10 random starts: 0.9719
+Number of communities: 17
+Elapsed time: 43 seconds
+Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
+
+Number of nodes: 91948
+Number of edges: 3292353
+
+Running Louvain algorithm...
+Maximum modularity in 10 random starts: 0.9631
+Number of communities: 22
+Elapsed time: 38 seconds
+Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
+
+Number of nodes: 91948
+Number of edges: 3292353
+
+Running Louvain algorithm...
+Maximum modularity in 10 random starts: 0.9560
+Number of communities: 22
+Elapsed time: 41 seconds
+Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
+
+Number of nodes: 91948
+Number of edges: 3292353
+
+Running Louvain algorithm...
+Maximum modularity in 10 random starts: 0.9494
+Number of communities: 24
+Elapsed time: 46 seconds
+Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
+
+Number of nodes: 91948
+Number of edges: 3292353
+
+Running Louvain algorithm...
+Maximum modularity in 10 random starts: 0.9434
+Number of communities: 26
+Elapsed time: 37 seconds
+Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
+
+Number of nodes: 91948
+Number of edges: 3292353
+
+Running Louvain algorithm...
+Maximum modularity in 10 random starts: 0.9379
+Number of communities: 29
+Elapsed time: 40 seconds
+Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
+
+Number of nodes: 91948
+Number of edges: 3292353
+
+Running Louvain algorithm...
+Maximum modularity in 10 random starts: 0.9331
+Number of communities: 33
+Elapsed time: 40 seconds
+Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
+
+Number of nodes: 91948
+Number of edges: 3292353
+
+Running Louvain algorithm...
+Maximum modularity in 10 random starts: 0.9278
+Number of communities: 33
+Elapsed time: 36 seconds
+Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
+
+Number of nodes: 91948
+Number of edges: 3292353
+
+Running Louvain algorithm...
+Maximum modularity in 10 random starts: 0.9232
+Number of communities: 34
+Elapsed time: 38 seconds</code></pre>
+<pre class="r"><code>head(MergedObject@meta.data)</code></pre>
+<pre><code>                         orig.ident nCount_RNA nFeature_RNA percent.mt
+HC001_AAACCCAAGTTATGGA-1      HC001       6083         2257  18.411968
+HC001_AAACCCACAATGAACA-1      HC001       9596         2841   7.690704
+HC001_AAACCCACACCACTGG-1      HC001      13198         3137  17.608729
+HC001_AAACCCAGTGGATTTC-1      HC001      20340         3928  11.607670
+HC001_AAACCCATCCTAAACG-1      HC001       9317         2735   6.053451
+HC001_AAACCCATCTAAACGC-1      HC001      19053         3742  11.530992
+                          percent.hb percent.ribo RNA_snn_res.0.3
+HC001_AAACCCAAGTTATGGA-1 0.000000000     9.156666              19
+HC001_AAACCCACAATGAACA-1 0.000000000    12.932472               2
+HC001_AAACCCACACCACTGG-1 0.007576906    26.466131               0
+HC001_AAACCCAGTGGATTTC-1 0.009832842    30.776794               0
+HC001_AAACCCATCCTAAACG-1 0.010733069    19.437587               2
+HC001_AAACCCATCTAAACGC-1 0.015745552    33.910670              17
+                         seurat_clusters doublet nCount_norm RNA_snn_res.0.1
+HC001_AAACCCAAGTTATGGA-1              27 Singlet    3052.648              13
+HC001_AAACCCACAATGAACA-1               3 Singlet    3294.847               0
+HC001_AAACCCACACCACTGG-1               0 Singlet    3040.490               1
+HC001_AAACCCAGTGGATTTC-1               7 Singlet    3056.211               1
+HC001_AAACCCATCCTAAACG-1              13 Singlet    3176.429               0
+HC001_AAACCCATCTAAACGC-1              23 Singlet    2951.497               1
+                         RNA_snn_res.0.2 RNA_snn_res.0.4 RNA_snn_res.0.5
+HC001_AAACCCAAGTTATGGA-1               2              11              11
+HC001_AAACCCACAATGAACA-1               2               4               4
+HC001_AAACCCACACCACTGG-1               1               0               1
+HC001_AAACCCAGTGGATTTC-1               1               0               1
+HC001_AAACCCATCCTAAACG-1               2              11              11
+HC001_AAACCCATCTAAACGC-1              14              18              17
+                         RNA_snn_res.0.6 RNA_snn_res.0.7 RNA_snn_res.0.8
+HC001_AAACCCAAGTTATGGA-1              12              23              26
+HC001_AAACCCACAATGAACA-1               4               4               4
+HC001_AAACCCACACCACTGG-1               0               0               0
+HC001_AAACCCAGTGGATTTC-1               7               0               7
+HC001_AAACCCATCCTAAACG-1              12              14              13
+HC001_AAACCCATCTAAACGC-1              20              21              21
+                         RNA_snn_res.0.9 RNA_snn_res.1
+HC001_AAACCCAAGTTATGGA-1              27            27
+HC001_AAACCCACAATGAACA-1               4             3
+HC001_AAACCCACACCACTGG-1               3             0
+HC001_AAACCCAGTGGATTTC-1               5             7
+HC001_AAACCCATCCTAAACG-1              13            13
+HC001_AAACCCATCTAAACGC-1              25            23</code></pre>
+<pre class="r"><code>p &lt;- clustree(MergedObject@meta.data[, grep(&quot;RNA_snn_res&quot;,
+                                       colnames(MergedObject@meta.data))],
+              prefix = &quot;RNA_snn_res.&quot;)
+p</code></pre>
+<p><img src="figure/01_QC3.Rmd/Clustree-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggsave(filename = file.path(plots_output_directory,
+                            &quot;01_QC3_clustree.png&quot;),
+       plot = p)</code></pre>
+<pre class="r"><code>set.seed(123)
+p &lt;- DimPlot(MergedObject,
+             reduction = &quot;umap_harmony_DR&quot;,
+             group.by = c(&quot;RNA_snn_res.0.1&quot;,
+                          &quot;RNA_snn_res.0.2&quot;,
+                          &quot;RNA_snn_res.0.3&quot;, 
+                          &quot;RNA_snn_res.0.4&quot;, 
+                          &quot;RNA_snn_res.0.5&quot;, 
+                          &quot;RNA_snn_res.0.6&quot;, 
+                          &quot;RNA_snn_res.0.7&quot;, 
+                          &quot;RNA_snn_res.0.8&quot;, 
+                          &quot;RNA_snn_res.0.9&quot;,
+                          &quot;RNA_snn_res.1&quot;))
+p &amp; NoLegend()</code></pre>
+<p><img src="figure/01_QC3.Rmd/DimPlot%20per%20resolution-1.png" width="1536" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggsave(filename = file.path(plots_output_directory, 
+                            &quot;01_QC3_DimPlotPerRes.png&quot;),
+       height = 10,
+       width = 16)</code></pre>
+<pre class="r"><code>selected_resolution &lt;- &quot;RNA_snn_res.0.3&quot;
+
+p &lt;- DimPlot(MergedObject,
+             reduction = &quot;umap_harmony_DR&quot;,
+             group.by = selected_resolution,
+             label = TRUE) |
+      DimPlot(MergedObject,
+              reduction = &quot;umap_harmony_DR&quot;,
+              group.by = &quot;orig.ident&quot;)
+p</code></pre>
+<p><img src="figure/01_QC3.Rmd/DimPlot%20selected%20resolution-1.png" width="1344" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggsave(filename = file.path(plots_output_directory, 
+                            &quot;01_QC3_DimPlotSelectedRes.png&quot;),
+       width = 14,
+       height = 8)</code></pre>
+</div>
+<div id="adding-patient-groups" class="section level2">
+<h2>Adding patient groups</h2>
+<p>We are going to add the individual patients to the following
+groups:</p>
+<ul>
+<li><p>HC: healthy controls</p></li>
+<li><p>Pre: preSSc</p></li>
+<li><p>S: eSSc</p></li>
+<li><p>PRP: Primary Raynauds</p></li>
+</ul>
+<pre class="r"><code>MergedObject@meta.data &lt;- MergedObject@meta.data |&gt;
+  mutate(group.ident = case_when(grepl(&quot;^RaHC&quot;, orig.ident) ~ &quot;PRP&quot;,
+                                 grepl(&quot;^HC&quot;,   orig.ident) ~ &quot;HC&quot;,
+                                 grepl(&quot;^V&quot;,    orig.ident) ~ &quot;Pre&quot;,
+                                 grepl(&quot;^S&quot;,    orig.ident) ~ &quot;S&quot;,
+                                 TRUE ~ NA_character_))
+
+# Verify every cell was assigned and the mapping is as expected
+table(MergedObject$orig.ident,
+      MergedObject$group.ident)</code></pre>
+<pre><code>         
+            HC  Pre  PRP    S
+  HC001   3394    0    0    0
+  HC002   2143    0    0    0
+  HC003   1225    0    0    0
+  HC004   1651    0    0    0
+  HC005   4793    0    0    0
+  HC006   2634    0    0    0
+  RaHC001    0    0 7253    0
+  RaHC002    0    0 6867    0
+  RaHC003    0    0 2953    0
+  RaHC004    0    0 3981    0
+  S3001      0    0    0 1897
+  S3006      0    0    0 1578
+  S3008      0    0    0 6571
+  S3011      0    0    0 5335
+  S3012      0    0    0 4375
+  S3013      0    0    0 1983
+  S3015      0    0    0 4178
+  V002       0 3396    0    0
+  V003       0 1984    0    0
+  V007       0 4363    0    0
+  V009       0 4993    0    0
+  V010       0 3769    0    0
+  V014       0 2205    0    0
+  V016       0 1249    0    0
+  V018       0 3127    0    0
+  V019       0 4051    0    0</code></pre>
+</div>
+<div id="umaps-and-qc-plots" class="section level2">
+<h2>UMAPs and QC Plots</h2>
+<pre class="r"><code>p &lt;- DimPlot(MergedObject,
+             reduction = &quot;umap_harmony_DR&quot;,
+             group.by = selected_resolution,
+             split.by = &quot;group.ident&quot;)
+p</code></pre>
+<p><img src="figure/01_QC3.Rmd/UMAP%20split%20by%20group-1.png" width="1344" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggsave(filename = file.path(plots_output_directory, 
+                            &quot;01_QC3_DimPlotperGroup.png&quot;),
+       plot = p,
+       width = 14,
+       height = 8)</code></pre>
+<pre class="r"><code>#Check if the group idents are correct
+p &lt;- DimPlot(MergedObject,
+             reduction = &quot;umap_harmony_DR&quot;,
+             group.by = &quot;group.ident&quot;,
+             split.by = &quot;group.ident&quot;,
+             cols = palette_discrete)
+p</code></pre>
+<p><img src="figure/01_QC3.Rmd/UMAP%20groups-1.png" width="1344" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggsave(filename = file.path(plots_output_directory, 
+                            &quot;01_QC3_DimPlotGroups.png&quot;),
+       plot = p,
+       width = 14,
+       height = 8)</code></pre>
+<pre class="r"><code>p &lt;- VlnPlot(MergedObject,
+             group.by = selected_resolution,
+             pt.size = 0,
+             features = c(&quot;nFeature_RNA&quot;,
+                          &quot;nCount_RNA&quot;,
+                          &quot;percent.mt&quot;,
+                          &quot;percent.hb&quot;,
+                          &quot;percent.ribo&quot;),
+             ncol = 2)
+p</code></pre>
+<p><img src="figure/01_QC3.Rmd/final%20QC%20metrics-1.png" width="1152" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggsave(filename = file.path(plots_output_directory, 
+                            &quot;01_QC3_VlnPlotFinalQCMetrics.png&quot;),
+       plot = p,
+       width = 12,
+       height = 8)</code></pre>
+<pre class="r"><code>p &lt;- VlnPlot(MergedObject,
+             group.by = &quot;orig.ident&quot;,
+             pt.size = 0,
+             features = c(&quot;nFeature_RNA&quot;,
+                          &quot;nCount_RNA&quot;,
+                          &quot;percent.mt&quot;,
+                          &quot;percent.hb&quot;,
+                          &quot;percent.ribo&quot;),
+             ncol = 2)
+p</code></pre>
+<p><img src="figure/01_QC3.Rmd/QC%20metrics%20per%20sample-1.png" width="1152" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggsave(filename = file.path(plots_output_directory, 
+                            &quot;01_QC3_VlnPlotFinalQCMetrics_perSample.png&quot;),
+       plot = p,
+       width = 12,
+       height = 8)</code></pre>
+<pre class="r"><code>p &lt;- VlnPlot(MergedObject,
+             group.by = &quot;group.ident&quot;,
+             pt.size = 0,
+             features = c(&quot;nFeature_RNA&quot;,
+                          &quot;nCount_RNA&quot;,
+                          &quot;percent.mt&quot;,
+                          &quot;percent.hb&quot;,
+                          &quot;percent.ribo&quot;),
+             ncol = 2)
+p</code></pre>
+<p><img src="figure/01_QC3.Rmd/QC%20metrics%20per%20group-1.png" width="1152" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggsave(filename = file.path(plots_output_directory, 
+                            &quot;01_QC3_VlnPlotFinalQCMetrics_perGroup.png&quot;),
+       plot = p,
+       width = 12,
+       height = 8)</code></pre>
+</div>
+<div id="summary" class="section level2">
+<h2>Summary</h2>
+<p>Cells per sample:</p>
+<pre class="r"><code># Cell counts per sample and per group in one table
+cell_counts &lt;- MergedObject@meta.data %&gt;% 
+  count(orig.ident,
+        group.ident,
+        name = &quot;n_cells&quot;) %&gt;% 
+  arrange(group.ident,
+          orig.ident)
+
+cell_counts</code></pre>
+<pre><code>   orig.ident group.ident n_cells
+1       HC001          HC    3394
+2       HC002          HC    2143
+3       HC003          HC    1225
+4       HC004          HC    1651
+5       HC005          HC    4793
+6       HC006          HC    2634
+7     RaHC001         PRP    7253
+8     RaHC002         PRP    6867
+9     RaHC003         PRP    2953
+10    RaHC004         PRP    3981
+11       V002         Pre    3396
+12       V003         Pre    1984
+13       V007         Pre    4363
+14       V009         Pre    4993
+15       V010         Pre    3769
+16       V014         Pre    2205
+17       V016         Pre    1249
+18       V018         Pre    3127
+19       V019         Pre    4051
+20      S3001           S    1897
+21      S3006           S    1578
+22      S3008           S    6571
+23      S3011           S    5335
+24      S3012           S    4375
+25      S3013           S    1983
+26      S3015           S    4178</code></pre>
+<p>Cells per group:</p>
+<pre class="r"><code>cell_counts_perGroup &lt;- cell_counts %&gt;% 
+  group_by(group.ident) %&gt;% 
+  summarize(sum(n_cells)) %&gt;% 
+  ungroup() %&gt;% 
+  mutate(
+    sample_size = case_when(
+      group.ident == &quot;HC&quot; ~ 6,
+      group.ident == &quot;PRP&quot; ~ 4,
+      group.ident == &quot;Pre&quot; ~ 9,
+      group.ident == &quot;S&quot; ~ 7
+    )
+  )
+
+cell_counts_perGroup</code></pre>
+<pre><code># A tibble: 4 × 3
+  group.ident `sum(n_cells)` sample_size
+  &lt;chr&gt;                &lt;int&gt;       &lt;dbl&gt;
+1 HC                   15840           6
+2 PRP                  21054           4
+3 Pre                  29137           9
+4 S                    25917           7</code></pre>
+<pre class="r"><code>total_cells &lt;- sum(cell_counts$n_cells)</code></pre>
+<p>Total number of cells: 91948.</p>
+<pre class="r"><code>saveRDS(MergedObject,
+        file = file.path(RObjects_output_directory,
+                         &quot;01_QC3_FinalMergedObject.rds&quot;))</code></pre>
+</div>
+<div id="sessioninfo" class="section level2">
+<h2>SessionInfo</h2>
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>R version 4.5.2 (2025-10-31)
+Platform: x86_64-pc-linux-gnu
+Running under: Ubuntu 24.04.3 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
+LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+time zone: Etc/UTC
+tzcode source: system (glibc)
+
+attached base packages:
+[1] stats     graphics  grDevices datasets  utils     methods   base     
+
+other attached packages:
+ [1] future_1.75.0      dittoSeq_1.22.0    presto_1.0.0       data.table_1.18.4 
+ [5] patchwork_1.3.2    harmony_2.0.5      Rcpp_1.1.2         clustree_0.5.1    
+ [9] ggraph_2.2.2       here_1.0.2         lubridate_1.9.5    forcats_1.0.1     
+[13] stringr_1.6.0      dplyr_1.2.1        purrr_1.2.2        readr_2.2.0       
+[17] tidyr_1.3.2        tibble_3.3.1       ggplot2_4.0.3      tidyverse_2.0.0   
+[21] Seurat_5.5.1       SeuratObject_5.4.0 sp_2.2-1           workflowr_1.7.2   
+
+loaded via a namespace (and not attached):
+  [1] RcppAnnoy_0.0.23            splines_4.5.2              
+  [3] later_1.4.4                 polyclip_1.10-7            
+  [5] fastDummies_1.7.6           lifecycle_1.0.5            
+  [7] rprojroot_2.1.1             globals_0.19.1             
+  [9] processx_3.8.6              lattice_0.22-7             
+ [11] MASS_7.3-65                 backports_1.5.1            
+ [13] magrittr_2.0.4              plotly_4.12.0              
+ [15] sass_0.4.10                 rmarkdown_2.30             
+ [17] jquerylib_0.1.4             yaml_2.3.11                
+ [19] httpuv_1.6.16               otel_0.2.0                 
+ [21] sctransform_0.4.3           spam_2.11-4                
+ [23] spatstat.sparse_3.2-0       reticulate_1.46.0          
+ [25] cowplot_1.2.0               pbapply_1.7-4              
+ [27] RColorBrewer_1.1-3          abind_1.4-8                
+ [29] Rtsne_0.17                  GenomicRanges_1.62.1       
+ [31] BiocGenerics_0.56.0         tweenr_2.0.3               
+ [33] git2r_0.36.2                IRanges_2.44.0             
+ [35] S4Vectors_0.48.0            ggrepel_0.9.8              
+ [37] irlba_2.3.7                 listenv_1.0.0              
+ [39] spatstat.utils_3.2-3        pheatmap_1.0.13            
+ [41] goftest_1.2-3               RSpectra_0.16-2            
+ [43] spatstat.random_3.5-0       fitdistrplus_1.2-6         
+ [45] parallelly_1.48.0           codetools_0.2-20           
+ [47] DelayedArray_0.36.0         ggforce_0.5.0              
+ [49] tidyselect_1.2.1            farver_2.1.2               
+ [51] viridis_0.6.5               matrixStats_1.5.0          
+ [53] stats4_4.5.2                spatstat.explore_3.8-1     
+ [55] Seqinfo_1.0.0               jsonlite_2.0.0             
+ [57] tidygraph_1.3.1             progressr_1.0.0            
+ [59] ggridges_0.5.7              survival_3.8-3             
+ [61] systemfonts_1.3.2           tools_4.5.2                
+ [63] ragg_1.5.2                  ica_1.0-3                  
+ [65] glue_1.8.0                  SparseArray_1.10.8         
+ [67] gridExtra_2.3.1             xfun_0.54                  
+ [69] MatrixGenerics_1.22.0       withr_3.0.3                
+ [71] BiocManager_1.30.27         fastmap_1.2.0              
+ [73] callr_3.7.6                 digest_0.6.39              
+ [75] timechange_0.4.0            R6_2.6.1                   
+ [77] mime_0.13                   textshaping_1.0.5          
+ [79] colorspace_2.1-3            scattermore_1.2            
+ [81] tensor_1.5.1                spatstat.data_3.1-9        
+ [83] RhpcBLASctl_0.23-42         utf8_1.2.6                 
+ [85] generics_0.1.4              renv_1.2.3                 
+ [87] graphlayouts_1.2.4          httr_1.4.8                 
+ [89] htmlwidgets_1.6.4           S4Arrays_1.10.1            
+ [91] whisker_0.4.1               uwot_0.2.4                 
+ [93] pkgconfig_2.0.3             gtable_0.3.6               
+ [95] lmtest_0.9-40               S7_0.2.2                   
+ [97] XVector_0.50.0              SingleCellExperiment_1.32.0
+ [99] htmltools_0.5.8.1           dotCall64_1.2              
+[101] scales_1.4.0                Biobase_2.70.0             
+[103] png_0.1-9                   spatstat.univar_3.2-0      
+[105] knitr_1.50                  rstudioapi_0.17.1          
+[107] tzdb_0.5.0                  reshape2_1.4.5             
+[109] checkmate_2.3.4             nlme_3.1-168               
+[111] cachem_1.1.0                zoo_1.8-15                 
+[113] KernSmooth_2.23-26          vipor_0.4.7                
+[115] parallel_4.5.2              miniUI_0.1.2               
+[117] ggrastr_1.0.2               pillar_1.11.1              
+[119] grid_4.5.2                  vctrs_0.7.3                
+[121] RANN_2.6.2                  promises_1.5.0             
+[123] xtable_1.8-8                cluster_2.1.8.1            
+[125] beeswarm_0.4.0              evaluate_1.0.5             
+[127] cli_3.6.5                   compiler_4.5.2             
+[129] rlang_1.3.0                 future.apply_1.20.2        
+[131] labeling_0.4.3              ps_1.9.3                   
+[133] ggbeeswarm_0.7.3            getPass_0.2-4              
+[135] plyr_1.8.9                  fs_1.6.6                   
+[137] stringi_1.8.7               viridisLite_0.4.3          
+[139] deldir_2.0-4                lazyeval_0.2.3             
+[141] spatstat.geom_3.8-1         Matrix_1.7-4               
+[143] RcppHNSW_0.7.0              hms_1.1.4                  
+[145] shiny_1.14.0                SummarizedExperiment_1.40.0
+[147] ROCR_1.0-12                 igraph_2.3.3               
+[149] memoise_2.0.1               bslib_0.9.0                </code></pre>
+<br>
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo" data-toggle="collapse" data-target="#workflowr-sessioninfo" style="display: block;">
+<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
+Session information
+</button>
+</p>
+<div id="workflowr-sessioninfo" class="collapse">
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>R version 4.5.2 (2025-10-31)
+Platform: x86_64-pc-linux-gnu
+Running under: Ubuntu 24.04.3 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
+LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+time zone: Etc/UTC
+tzcode source: system (glibc)
+
+attached base packages:
+[1] stats     graphics  grDevices datasets  utils     methods   base     
+
+other attached packages:
+ [1] future_1.75.0      dittoSeq_1.22.0    presto_1.0.0       data.table_1.18.4 
+ [5] patchwork_1.3.2    harmony_2.0.5      Rcpp_1.1.2         clustree_0.5.1    
+ [9] ggraph_2.2.2       here_1.0.2         lubridate_1.9.5    forcats_1.0.1     
+[13] stringr_1.6.0      dplyr_1.2.1        purrr_1.2.2        readr_2.2.0       
+[17] tidyr_1.3.2        tibble_3.3.1       ggplot2_4.0.3      tidyverse_2.0.0   
+[21] Seurat_5.5.1       SeuratObject_5.4.0 sp_2.2-1           workflowr_1.7.2   
+
+loaded via a namespace (and not attached):
+  [1] RcppAnnoy_0.0.23            splines_4.5.2              
+  [3] later_1.4.4                 polyclip_1.10-7            
+  [5] fastDummies_1.7.6           lifecycle_1.0.5            
+  [7] rprojroot_2.1.1             globals_0.19.1             
+  [9] processx_3.8.6              lattice_0.22-7             
+ [11] MASS_7.3-65                 backports_1.5.1            
+ [13] magrittr_2.0.4              plotly_4.12.0              
+ [15] sass_0.4.10                 rmarkdown_2.30             
+ [17] jquerylib_0.1.4             yaml_2.3.11                
+ [19] httpuv_1.6.16               otel_0.2.0                 
+ [21] sctransform_0.4.3           spam_2.11-4                
+ [23] spatstat.sparse_3.2-0       reticulate_1.46.0          
+ [25] cowplot_1.2.0               pbapply_1.7-4              
+ [27] RColorBrewer_1.1-3          abind_1.4-8                
+ [29] Rtsne_0.17                  GenomicRanges_1.62.1       
+ [31] BiocGenerics_0.56.0         tweenr_2.0.3               
+ [33] git2r_0.36.2                IRanges_2.44.0             
+ [35] S4Vectors_0.48.0            ggrepel_0.9.8              
+ [37] irlba_2.3.7                 listenv_1.0.0              
+ [39] spatstat.utils_3.2-3        pheatmap_1.0.13            
+ [41] goftest_1.2-3               RSpectra_0.16-2            
+ [43] spatstat.random_3.5-0       fitdistrplus_1.2-6         
+ [45] parallelly_1.48.0           codetools_0.2-20           
+ [47] DelayedArray_0.36.0         ggforce_0.5.0              
+ [49] tidyselect_1.2.1            farver_2.1.2               
+ [51] viridis_0.6.5               matrixStats_1.5.0          
+ [53] stats4_4.5.2                spatstat.explore_3.8-1     
+ [55] Seqinfo_1.0.0               jsonlite_2.0.0             
+ [57] tidygraph_1.3.1             progressr_1.0.0            
+ [59] ggridges_0.5.7              survival_3.8-3             
+ [61] systemfonts_1.3.2           tools_4.5.2                
+ [63] ragg_1.5.2                  ica_1.0-3                  
+ [65] glue_1.8.0                  SparseArray_1.10.8         
+ [67] gridExtra_2.3.1             xfun_0.54                  
+ [69] MatrixGenerics_1.22.0       withr_3.0.3                
+ [71] BiocManager_1.30.27         fastmap_1.2.0              
+ [73] callr_3.7.6                 digest_0.6.39              
+ [75] timechange_0.4.0            R6_2.6.1                   
+ [77] mime_0.13                   textshaping_1.0.5          
+ [79] colorspace_2.1-3            scattermore_1.2            
+ [81] tensor_1.5.1                spatstat.data_3.1-9        
+ [83] RhpcBLASctl_0.23-42         utf8_1.2.6                 
+ [85] generics_0.1.4              renv_1.2.3                 
+ [87] graphlayouts_1.2.4          httr_1.4.8                 
+ [89] htmlwidgets_1.6.4           S4Arrays_1.10.1            
+ [91] whisker_0.4.1               uwot_0.2.4                 
+ [93] pkgconfig_2.0.3             gtable_0.3.6               
+ [95] lmtest_0.9-40               S7_0.2.2                   
+ [97] XVector_0.50.0              SingleCellExperiment_1.32.0
+ [99] htmltools_0.5.8.1           dotCall64_1.2              
+[101] scales_1.4.0                Biobase_2.70.0             
+[103] png_0.1-9                   spatstat.univar_3.2-0      
+[105] knitr_1.50                  rstudioapi_0.17.1          
+[107] tzdb_0.5.0                  reshape2_1.4.5             
+[109] checkmate_2.3.4             nlme_3.1-168               
+[111] cachem_1.1.0                zoo_1.8-15                 
+[113] KernSmooth_2.23-26          vipor_0.4.7                
+[115] parallel_4.5.2              miniUI_0.1.2               
+[117] ggrastr_1.0.2               pillar_1.11.1              
+[119] grid_4.5.2                  vctrs_0.7.3                
+[121] RANN_2.6.2                  promises_1.5.0             
+[123] xtable_1.8-8                cluster_2.1.8.1            
+[125] beeswarm_0.4.0              evaluate_1.0.5             
+[127] cli_3.6.5                   compiler_4.5.2             
+[129] rlang_1.3.0                 future.apply_1.20.2        
+[131] labeling_0.4.3              ps_1.9.3                   
+[133] ggbeeswarm_0.7.3            getPass_0.2-4              
+[135] plyr_1.8.9                  fs_1.6.6                   
+[137] stringi_1.8.7               viridisLite_0.4.3          
+[139] deldir_2.0-4                lazyeval_0.2.3             
+[141] spatstat.geom_3.8-1         Matrix_1.7-4               
+[143] RcppHNSW_0.7.0              hms_1.1.4                  
+[145] shiny_1.14.0                SummarizedExperiment_1.40.0
+[147] ROCR_1.0-12                 igraph_2.3.3               
+[149] memoise_2.0.1               bslib_0.9.0                </code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+<!-- Adjust MathJax settings so that all math formulae are shown using
+TeX fonts only; see
+https://docs.mathjax.org/en/latest/web/configuration.html. This will make
+the presentation more consistent at the cost of the webpage sometimes
+taking slightly longer to load. Note that this only works because the
+footer is added to webpages before the MathJax javascript. -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
