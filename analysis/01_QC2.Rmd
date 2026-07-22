@@ -425,7 +425,7 @@ We are only going to plot the doublet proportion per cluster to see if there are
 # Doublet fraction per cluster at the chosen resolution
 doublet_by_cluster <- MergedObject@meta.data %>%
   group_by(
-    cluster = .data[["RNA_snn_res.0.2"]],
+    cluster = .data[["RNA_snn_res.0.3"]],
     doublet
   ) %>%
   summarise(
@@ -465,7 +465,7 @@ doublet_composition_plot <- ggplot(
   scale_y_continuous(labels = scales::percent) +
   theme_minimal() +
   labs(
-    x = "Cluster (res 0.2)",
+    x = "Cluster (res 0.3)",
     y = "Proportion of cells",
     fill = NULL
   )
@@ -507,7 +507,7 @@ Selected resolution according to expected number of clusters.
 
 ```{r set resolution, message = F, warning = F}
 MergedObject <- SetIdent(MergedObject,
-                         value = MergedObject$RNA_snn_res.0.2)
+                         value = MergedObject$RNA_snn_res.0.3)
 
 head(MergedObject@active.ident)
 ```
@@ -517,7 +517,7 @@ set.seed(123)
 
 umap_selected_res <- DimPlot(MergedObject,
                              reduction = "umap_harmony",
-                             group.by = "RNA_snn_res.0.2",
+                             group.by = "RNA_snn_res.0.3",
                              label = TRUE)
 umap_selected_res
 
@@ -530,7 +530,7 @@ ggsave(filename = file.path(plots_output_directory, "01_QC2_UMAPselectedRes.png"
 # Visualize per sample
 umap_selected_res_PerSample <- DimPlot(MergedObject,
                                       reduction = "umap_harmony",
-                                      group.by = "RNA_snn_res.0.2",
+                                      group.by = "RNA_snn_res.0.3",
                                       split.by = "orig.ident",
                                       label = TRUE)
 
@@ -586,7 +586,7 @@ top3_by_cluster <- MergedObject_Markers %>%
 
 dotplot_top3 <- dittoDotPlot(MergedObject,
                              vars = unique(top3_by_cluster$gene),
-                             group.by = "RNA_snn_res.0.2",
+                             group.by = "RNA_snn_res.0.3",
                              size = 5)
 
 ggsave(file.path(plots_output_directory, 
